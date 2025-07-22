@@ -1,5 +1,5 @@
 // Package dify provides a Go client library for Dify AI platform APIs
-package dify
+package godify
 
 import (
 	"github.com/kingfs/godify/console"
