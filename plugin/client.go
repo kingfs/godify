@@ -11,19 +11,21 @@ import (
 	"strconv"
 
 	"github.com/kingfs/godify/client"
+	"github.com/kingfs/godify/models"
 )
 
 type Client struct {
 	baseClient *client.BaseClient
 }
 
-func PluginNewClient(accessToken, baseURL string) *Client {
+func PluginNewClient(baseURL string, authorization string, workspace_id string) *Client {
 	config := &client.ClientConfig{
 		BaseURL:    baseURL + "/console/api/workspaces/current/plugin",
 		AuthType:   client.AuthTypeBearer,
-		Token:      accessToken,
+		Token:      authorization,
 		Timeout:    30 * time.Second,
 		MaxRetries: 3,
+		WorkspaceID: &workspace_id,
 	}
 
 	return &Client{
@@ -31,53 +33,9 @@ func PluginNewClient(accessToken, baseURL string) *Client {
 	}
 }
 
-// PluginGetDebuggingKey 获取插件调试密钥信息
-func (c *Client) PluginGetDebuggingKey() {
-	// TODO: 实现获取插件调试密钥信息的接口调用
-}
-
-// Plugin 插件基本信息
-// 字段根据 Python 返回结构推断
-// TODO: 可根据实际API返回补充字段
-// 示例字段
-// ID/Name/Description/Version/Status/CreatedAt/UpdatedAt
-//
-type Plugin struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	Description   string `json:"description"`
-	Icon          string `json:"icon"`
-	LatestVersion string `json:"latest_version"`
-	Status        string `json:"status"`
-	CreatedAt     string `json:"created_at"`
-	UpdatedAt     string `json:"updated_at"`
-}
-
-// PluginListResponse 插件列表响应
-//
-type PluginListResponse struct {
-	Plugins []Plugin `json:"plugins"`
-	Total   int      `json:"total"`
-}
-
-// PluginPermissionResponse 插件权限响应
-//
-type PluginPermissionResponse struct {
-	InstallPermission string `json:"install_permission"`
-	DebugPermission   string `json:"debug_permission"`
-}
-
-// PluginManifestResponse 插件manifest响应
-//
-type PluginManifestResponse struct {
-	Manifest map[string]interface{} `json:"manifest"`
-}
-
-// PluginIconResponse 插件图标响应
-// 直接返回二进制数据，不需要结构体
 
 // PluginList 获取插件列表
-func (c *Client) PluginList(ctx context.Context, page, pageSize int) (*PluginListResponse, error) {
+func (c *Client) PluginList(ctx context.Context, page, pageSize int) (*models.PluginListResponse, error) {
 	query := map[string]string{
 		"page":      strconv.Itoa(page),
 		"page_size": strconv.Itoa(pageSize),
@@ -87,7 +45,7 @@ func (c *Client) PluginList(ctx context.Context, page, pageSize int) (*PluginLis
 		Path:   "/list",
 		Query:  query,
 	}
-	var resp PluginListResponse
+	var resp models.PluginListResponse
 	err := c.baseClient.DoJSON(ctx, req, &resp)
 	return &resp, err
 }
@@ -112,7 +70,7 @@ func (c *Client) PluginUploadPkg(ctx context.Context, filename string, fileData 
 }
 
 // PluginInstallFromPkg 安装插件（本地包）
-func (c *Client) PluginInstallFromPkg(ctx context.Context, pkgPath string) (map[string]interface{}, error) {
+func (c *Client) PluginInstallFromPkg(ctx context.Context, pkgPath string) (*models.PluginInstallResponse, error) {
 	fileData, err := os.ReadFile(pkgPath)
 	if err != nil {
 		return nil, fmt.Errorf("读取测试插件包失败: %v", err)
@@ -123,172 +81,305 @@ func (c *Client) PluginInstallFromPkg(ctx context.Context, pkgPath string) (map[
 	if err != nil {
 		return nil, fmt.Errorf("上传插件包失败: %v", err)
 	}
-	body := map[string]interface{}{
-		"plugin_unique_identifiers": []interface{}{uniqueIdentifier},
+	body := map[string]any{
+		"plugin_unique_identifiers": []any{uniqueIdentifier},
 	}
 	req := &client.Request{
 		Method: "POST",
 		Path:   "/install/pkg",
 		Body:   body,
 	}
-	var result map[string]interface{}
+	var result models.PluginInstallResponse
 	err = c.baseClient.DoJSON(ctx, req, &result)
-	return result, err
+	return &result, err
 }
 
 // PluginUninstall 卸载插件
-func (c *Client) PluginUninstall(ctx context.Context, pluginInstallationID string) (map[string]interface{}, error) {
-	body := map[string]interface{}{
-		"plugin_installation_id": pluginInstallationID,
-	}
+func (c *Client) PluginUninstall(ctx context.Context, pluginInstallationID string) (*any, error) {
 	req := &client.Request{
 		Method: "POST",
 		Path:   "/uninstall",
-		Body:   body,
+		Body:   map[string]any{"plugin_installation_id": pluginInstallationID},
 	}
-	var result map[string]interface{}
+	var result any
 	err := c.baseClient.DoJSON(ctx, req, &result)
-	return result, err
+	return &result, err
 }
 
 // PluginGetPermission 获取插件权限
-func (c *Client) PluginGetPermission(ctx context.Context) (*PluginPermissionResponse, error) {
+func (c *Client) PluginGetPermission(ctx context.Context) (*any, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/permission/fetch",
 	}
-	var resp PluginPermissionResponse
-	err := c.baseClient.DoJSON(ctx, req, &resp)
-	return &resp, err
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
 
 // PluginChangePermission 修改插件权限
-func (c *Client) PluginChangePermission(ctx context.Context, installPermission, debugPermission string) (map[string]interface{}, error) {
-	body := map[string]interface{}{
+func (c *Client) PluginChangePermission(ctx context.Context, installPermission, debugPermission string) (*any, error) {
+	body := map[string]any{
 		"install_permission": installPermission,
-		"debug_permission":   debugPermission,
+		"debug_permission":  debugPermission,
 	}
 	req := &client.Request{
 		Method: "POST",
 		Path:   "/permission/change",
 		Body:   body,
 	}
-	var result map[string]interface{}
+	var result any
 	err := c.baseClient.DoJSON(ctx, req, &result)
-	return result, err
+	return &result, err
 }
 
 // PluginGetManifest 获取插件manifest
-func (c *Client) PluginGetManifest(ctx context.Context, pluginUniqueIdentifier string) (*PluginManifestResponse, error) {
-	query := map[string]string{
-		"plugin_unique_identifier": pluginUniqueIdentifier,
-	}
+func (c *Client) PluginGetManifest(ctx context.Context, pluginUniqueIdentifier string) (*any, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/fetch-manifest",
-		Query:  query,
+		Query:  map[string]string{"plugin_unique_identifier": pluginUniqueIdentifier},
 	}
-	var resp PluginManifestResponse
-	err := c.baseClient.DoJSON(ctx, req, &resp)
-	return &resp, err
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
 
 // PluginGetIcon 获取插件图标
 // 返回二进制数据和mimetype
 func (c *Client) PluginGetIcon(ctx context.Context, tenantID, filename string) ([]byte, string, error) {
-	query := map[string]string{
-		"tenant_id": tenantID,
-		"filename":  filename,
-	}
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/icon",
-		Query:  query,
+		Query:  map[string]string{"tenant_id": tenantID, "filename": filename},
 	}
 	resp, err := c.baseClient.Do(ctx, req)
 	if err != nil {
 		return nil, "", err
 	}
-	contentType := resp.Headers.Get("Content-Type")
+	contentType := ""
+	if resp.Headers != nil {
+		contentType = resp.Headers.Get("Content-Type")
+	}
 	return resp.Body, contentType, nil
 }
 
 // PluginListLatestVersions 获取插件最新版本信息
-func (c *Client) PluginListLatestVersions(pluginIDs []string) {
-	// TODO: 实现获取插件最新版本信息的接口调用
+func (c *Client) PluginListLatestVersions(ctx context.Context, pluginIDs []string) (*any, error) {
+	body := map[string]any{"plugin_ids": pluginIDs}
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/list/latest-versions",
+		Body:   body,
+	}
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
 
-// PluginGet 获取插件详情
-func (c *Client) PluginGet(pluginID string) {
-	// TODO: 实现获取插件详情的接口调用
+// PluginListInstallationsFromIds 批量获取插件安装信息
+func (c *Client) PluginListInstallationsFromIds(ctx context.Context, pluginIDs []string) (*any, error) {
+	body := map[string]any{"plugin_ids": pluginIDs}
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/list/installations/ids",
+		Body:   body,
+	}
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
 
-// PluginInstall 安装插件
-func (c *Client) PluginInstall(pluginID string, version string, params map[string]interface{}) {
-	// TODO: 实现安装插件的接口调用
+// PluginUploadFromGithub 从 Github 上传插件
+func (c *Client) PluginUploadFromGithub(ctx context.Context, repo, version, pkg string) (*any, error) {
+	body := map[string]any{
+		"repo":    repo,
+		"version": version,
+		"package": pkg,
+	}
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/upload/github",
+		Body:   body,
+	}
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
 
-// PluginUpdate 更新插件
-func (c *Client) PluginUpdate(pluginID string, version string, params map[string]interface{}) {
-	// TODO: 实现更新插件的接口调用
+// PluginUploadFromBundle 上传插件 bundle
+func (c *Client) PluginUploadFromBundle(ctx context.Context, fileName string, fileData []byte) (*any, error) {
+	resp, err := c.baseClient.UploadFile(ctx, "/upload/bundle", "bundle", fileName, fileData, nil)
+	if err != nil {
+		return nil, err
+	}
+	var result any
+	err = json.Unmarshal(resp.Body, &result)
+	return &result, err
 }
 
-// PluginGetParameter 获取插件参数
-func (c *Client) PluginGetParameter(pluginID string) {
-	// TODO: 实现获取插件参数的接口调用
+// PluginInstallFromGithub 从 Github 安装插件
+func (c *Client) PluginInstallFromGithub(ctx context.Context, pluginUniqueIdentifier, repo, version, pkg string) (*any, error) {
+	body := map[string]any{
+		"plugin_unique_identifier": pluginUniqueIdentifier,
+		"repo":    repo,
+		"version": version,
+		"package": pkg,
+	}
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/install/github",
+		Body:   body,
+	}
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
 
-// PluginUpdateParameter 更新插件参数
-func (c *Client) PluginUpdateParameter(pluginID string, params map[string]interface{}) {
-	// TODO: 实现更新插件参数的接口调用
+// PluginInstallFromMarketplace 从市场安装插件
+func (c *Client) PluginInstallFromMarketplace(ctx context.Context, pluginUniqueIdentifiers []string) (*any, error) {
+	body := map[string]any{"plugin_unique_identifiers": pluginUniqueIdentifiers}
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/install/marketplace",
+		Body:   body,
+	}
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
 
-// PluginUpdatePermission 更新插件权限
-func (c *Client) PluginUpdatePermission(pluginID string, permission map[string]interface{}) {
-	// TODO: 实现更新插件权限的接口调用
+// PluginFetchMarketplacePkg 获取市场插件包信息
+func (c *Client) PluginFetchMarketplacePkg(ctx context.Context, pluginUniqueIdentifier string) (*any, error) {
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/marketplace/pkg",
+		Query:  map[string]string{"plugin_unique_identifier": pluginUniqueIdentifier},
+	}
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
 
-// PluginDownload 下载插件
-func (c *Client) PluginDownload(pluginID string, version string) {
-	// TODO: 实现下载插件的接口调用
+// PluginFetchInstallTasks 获取插件安装任务列表
+// PluginFetchInstallTasks 获取插件安装任务列表
+func (c *Client) PluginFetchInstallTasks(ctx context.Context, page, pageSize int) (*any, error) {
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/tasks",
+		Query:  map[string]string{"page": strconv.Itoa(page), "page_size": strconv.Itoa(pageSize)},
+	}
+	var resp any
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
 }
 
-// PluginUpload 上传插件
-func (c *Client) PluginUpload(fileName string, fileData []byte) {
-	// TODO: 实现上传插件的接口调用
+// PluginFetchInstallTask 获取单个插件安装任务
+func (c *Client) PluginFetchInstallTask(ctx context.Context, taskID string) (*any, error) {
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/tasks/" + taskID,
+	}
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
 
-// PluginGetSchema 获取插件schema
-func (c *Client) PluginGetSchema(pluginID string) {
-	// TODO: 实现获取插件schema的接口调用
+// PluginDeleteInstallTask 删除插件安装任务
+func (c *Client) PluginDeleteInstallTask(ctx context.Context, taskID string) (*any, error) {
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/tasks/" + taskID + "/delete",
+	}
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
 
-// PluginGetLog 获取插件日志
-func (c *Client) PluginGetLog(pluginID string, page int, pageSize int) {
-	// TODO: 实现获取插件日志的接口调用
+// PluginDeleteAllInstallTaskItems 删除所有插件安装任务项
+func (c *Client) PluginDeleteAllInstallTaskItems(ctx context.Context) (*any, error) {
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/tasks/delete_all",
+	}
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
 
-// PluginGetDebugLog 获取插件调试日志
-func (c *Client) PluginGetDebugLog(pluginID string, page int, pageSize int) {
-	// TODO: 实现获取插件调试日志的接口调用
+// PluginDeleteInstallTaskItem 删除指定插件安装任务项
+func (c *Client) PluginDeleteInstallTaskItem(ctx context.Context, taskID, identifier string) (*any, error) {
+	path := "/tasks/" + taskID + "/delete/" + identifier
+	req := &client.Request{
+		Method: "POST",
+		Path:   path,
+	}
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
 
-// PluginGetDebugStatus 获取插件调试状态
-func (c *Client) PluginGetDebugStatus(pluginID string) {
-	// TODO: 实现获取插件调试状态的接口调用
+// PluginUpgradeFromMarketplace 从市场升级插件
+func (c *Client) PluginUpgradeFromMarketplace(ctx context.Context, originalPluginUniqueIdentifier, newPluginUniqueIdentifier string) (*any, error) {
+	body := map[string]any{
+		"original_plugin_unique_identifier": originalPluginUniqueIdentifier,
+		"new_plugin_unique_identifier":      newPluginUniqueIdentifier,
+	}
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/upgrade/marketplace",
+		Body:   body,
+	}
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
 
-// PluginStartDebug 启动插件调试
-func (c *Client) PluginStartDebug(pluginID string) {
-	// TODO: 实现启动插件调试的接口调用
+// PluginUpgradeFromGithub 从 Github 升级插件
+func (c *Client) PluginUpgradeFromGithub(ctx context.Context, originalPluginUniqueIdentifier, newPluginUniqueIdentifier, repo, version, pkg string) (*any, error) {
+	body := map[string]any{
+		"original_plugin_unique_identifier": originalPluginUniqueIdentifier,
+		"new_plugin_unique_identifier":      newPluginUniqueIdentifier,
+		"repo":    repo,
+		"version": version,
+		"package": pkg,
+	}
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/upgrade/github",
+		Body:   body,
+	}
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
 
-// PluginStopDebug 停止插件调试
-func (c *Client) PluginStopDebug(pluginID string) {
-	// TODO: 实现停止插件调试的接口调用
+// PluginDebuggingKey 获取插件调试 key
+func (c *Client) PluginDebuggingKey(ctx context.Context) (*any, error) {
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/debugging-key",
+	}
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
 
-// PluginGetDebugToken 获取插件调试token
-func (c *Client) PluginGetDebugToken(pluginID string) {
-	// TODO: 实现获取插件调试token的接口调用
+// PluginFetchDynamicSelectOptions 获取插件动态参数选项
+func (c *Client) PluginFetchDynamicSelectOptions(ctx context.Context, pluginID, provider, action, parameter, providerType string) (*any, error) {
+	query := map[string]string{
+		"plugin_id":     pluginID,
+		"provider":      provider,
+		"action":        action,
+		"parameter":     parameter,
+		"provider_type": providerType,
+	}
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/parameters/dynamic-options",
+		Query:  query,
+	}
+	var result any
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
 }
