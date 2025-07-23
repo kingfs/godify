@@ -124,13 +124,13 @@ func (c *Client) CreateApp(ctx context.Context, req *models.CreateAppRequest) (*
 }
 
 // GetApp 获取应用详情
-func (c *Client) GetApp(ctx context.Context, appID string) (*models.ConsoleApp, error) {
+func (c *Client) GetApp(ctx context.Context, appID string) (*models.ConsoleAppDetail, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/apps/" + appID,
 	}
 
-	var result models.ConsoleApp
+	var result models.ConsoleAppDetail
 	err := c.baseClient.DoJSON(ctx, req, &result)
 	return &result, err
 }

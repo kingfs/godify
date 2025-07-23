@@ -214,3 +214,65 @@ type APIKeyListResponse struct {
 type OperationResponse struct {
 	Result string `json:"result"`
 }
+
+// ConsoleAppDetail 控制台应用详情
+type ConsoleAppDetail struct {
+	ID                  string        `json:"id"`
+	Name                string        `json:"name"`
+	Description         string        `json:"description"`
+	Mode                string        `json:"mode"`
+	IconType            string        `json:"icon_type"`
+	Icon                string        `json:"icon"`
+	IconBackground      string        `json:"icon_background"`
+	IconURL             *string       `json:"icon_url"`
+	EnableSite          bool          `json:"enable_site"`
+	EnableAPI           bool          `json:"enable_api"`
+	ModelConfig         interface{}   `json:"model_config"`
+	Workflow            *WorkflowInfo `json:"workflow"`
+	Site                *SiteInfo     `json:"site"`
+	APIBaseURL          string        `json:"api_base_url"`
+	UseIconAsAnswerIcon bool          `json:"use_icon_as_answer_icon"`
+	CreatedBy           string        `json:"created_by"`
+	CreatedAt           UnixTime      `json:"created_at"`
+	UpdatedBy           *string       `json:"updated_by"`
+	UpdatedAt           UnixTime      `json:"updated_at"`
+	DeletedTools        []interface{} `json:"deleted_tools"`
+	AccessMode          *string       `json:"access_mode"`
+}
+
+// WorkflowInfo 工作流信息
+type WorkflowInfo struct {
+	ID        string   `json:"id"`
+	CreatedBy string   `json:"created_by"`
+	CreatedAt UnixTime `json:"created_at"`
+	UpdatedBy *string  `json:"updated_by"`
+	UpdatedAt UnixTime `json:"updated_at"`
+}
+
+// SiteInfo 站点信息
+type SiteInfo struct {
+	AccessToken            string   `json:"access_token"`
+	Code                   string   `json:"code"`
+	Title                  string   `json:"title"`
+	IconType               string   `json:"icon_type"`
+	Icon                   string   `json:"icon"`
+	IconBackground         string   `json:"icon_background"`
+	IconURL                *string  `json:"icon_url"`
+	Description            *string  `json:"description"`
+	DefaultLanguage        string   `json:"default_language"`
+	ChatColorTheme         *string  `json:"chat_color_theme"`
+	ChatColorThemeInverted bool     `json:"chat_color_theme_inverted"`
+	CustomizeDomain        *string  `json:"customize_domain"`
+	Copyright              *string  `json:"copyright"`
+	PrivacyPolicy          *string  `json:"privacy_policy"`
+	CustomDisclaimer       string   `json:"custom_disclaimer"`
+	CustomizeTokenStrategy string   `json:"customize_token_strategy"`
+	PromptPublic           bool     `json:"prompt_public"`
+	AppBaseURL             string   `json:"app_base_url"`
+	ShowWorkflowSteps      bool     `json:"show_workflow_steps"`
+	UseIconAsAnswerIcon    bool     `json:"use_icon_as_answer_icon"`
+	CreatedBy              string   `json:"created_by"`
+	CreatedAt              UnixTime `json:"created_at"`
+	UpdatedBy              string   `json:"updated_by"`
+	UpdatedAt              UnixTime `json:"updated_at"`
+}
