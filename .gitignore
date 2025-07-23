@@ -1,1 +1,4 @@
 *.out
+.env
+*.difypkg
+pkgs/
