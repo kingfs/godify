@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 )
 
 // SSEEvent SSE事件
@@ -25,28 +26,49 @@ type SSEHandler interface {
 
 // StreamResponse 流式响应处理
 func (c *BaseClient) StreamResponse(ctx context.Context, req *Request, handler SSEHandler) error {
+	startTime := time.Now()
+	
+	// 记录流式请求开始
+	c.logger.WithFields(map[string]interface{}{
+		"method": req.Method,
+		"path":   req.Path,
+	}).Info("Starting streaming request")
+	
 	// 执行请求
 	resp, err := c.Do(ctx, req)
 	if err != nil {
+		c.logger.WithError(err).Error("Streaming request failed")
 		return err
 	}
 
 	// 检查Content-Type是否为SSE
 	contentType := resp.Headers.Get("Content-Type")
 	if !strings.Contains(contentType, "text/event-stream") && !strings.Contains(contentType, "text/plain") {
-		return fmt.Errorf("unexpected content type for streaming response: %s", contentType)
+		err := fmt.Errorf("unexpected content type for streaming response: %s", contentType)
+		c.logger.WithError(err).Error("Invalid content type for streaming")
+		return err
 	}
 
+	// 记录监控指标
+	duration := time.Since(startTime)
+	c.metrics.RecordRequest(true, duration)
+	
 	// 解析SSE流
 	return c.parseSSEStream(resp.Body, handler)
 }
 
 // parseSSEStream 解析SSE数据流
 func (c *BaseClient) parseSSEStream(data []byte, handler SSEHandler) error {
-	defer handler.OnComplete()
+	defer func() {
+		c.logger.Info("SSE stream parsing completed")
+		handler.OnComplete()
+	}()
 
 	scanner := bufio.NewScanner(strings.NewReader(string(data)))
 	var event SSEEvent
+	eventCount := 0
+
+	c.logger.Debug("Starting SSE stream parsing")
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -54,7 +76,15 @@ func (c *BaseClient) parseSSEStream(data []byte, handler SSEHandler) error {
 		// 空行表示事件结束
 		if line == "" {
 			if event.Data != "" || event.Event != "" {
+				eventCount++
+				c.logger.WithFields(map[string]interface{}{
+					"event_type": event.Event,
+					"event_id":   event.ID,
+					"data_size":  len(event.Data),
+				}).Debug("Processing SSE event")
+				
 				if err := handler.OnEvent(&event); err != nil {
+					c.logger.WithError(err).Error("Failed to process SSE event")
 					handler.OnError(err)
 					return err
 				}
@@ -76,10 +106,12 @@ func (c *BaseClient) parseSSEStream(data []byte, handler SSEHandler) error {
 	}
 
 	if err := scanner.Err(); err != nil {
+		c.logger.WithError(err).Error("SSE stream scanning error")
 		handler.OnError(err)
 		return err
 	}
 
+	c.logger.WithField("event_count", eventCount).Info("SSE stream parsing completed successfully")
 	return nil
 }
 
