@@ -12,7 +12,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kingfs/godify/config"
 	"github.com/kingfs/godify/errors"
+	"github.com/kingfs/godify/logger"
+	"github.com/kingfs/godify/metrics"
 )
 
 // AuthType 认证类型
@@ -33,19 +36,40 @@ type ClientConfig struct {
 	MaxRetries int
 
 	WorkspaceID *string
+	
+	// 日志配置
+	Logger logger.Logger
+	
+	// 监控配置
+	Metrics *metrics.Metrics
+	
+	// 连接池配置
+	MaxIdleConns        int
+	MaxIdleConnsPerHost int
+	IdleConnTimeout     time.Duration
 }
 
 // BaseClient 基础HTTP客户端
 type BaseClient struct {
 	config     *ClientConfig
 	httpClient *http.Client
+	logger     logger.Logger
+	metrics    *metrics.Metrics
 }
 
 // NewBaseClient 创建基础客户端
 func NewBaseClient(config *ClientConfig) *BaseClient {
 	if config.HTTPClient == nil {
+		// 配置连接池
+		transport := &http.Transport{
+			MaxIdleConns:        config.MaxIdleConns,
+			MaxIdleConnsPerHost: config.MaxIdleConnsPerHost,
+			IdleConnTimeout:     config.IdleConnTimeout,
+		}
+		
 		config.HTTPClient = &http.Client{
-			Timeout: config.Timeout,
+			Timeout:   config.Timeout,
+			Transport: transport,
 		}
 	}
 
@@ -57,9 +81,21 @@ func NewBaseClient(config *ClientConfig) *BaseClient {
 		config.MaxRetries = 3
 	}
 
+	// 设置默认日志器
+	if config.Logger == nil {
+		config.Logger = logger.DefaultLogger
+	}
+	
+	// 设置默认监控
+	if config.Metrics == nil {
+		config.Metrics = metrics.NewMetrics(false) // 默认关闭监控
+	}
+
 	return &BaseClient{
 		config:     config,
 		httpClient: config.HTTPClient,
+		logger:     config.Logger,
+		metrics:    config.Metrics,
 	}
 }
 
@@ -73,6 +109,52 @@ func (c *BaseClient) WithWorkspaceID(workspaceID string) *BaseClient {
 func (c *BaseClient) WithToken(token string) *BaseClient {
 	c.config.Token = token
 	return c
+}
+
+// GetMetrics 获取监控指标
+func (c *BaseClient) GetMetrics() *metrics.Metrics {
+	return c.metrics
+}
+
+// NewClientFromConfig 从配置创建客户端
+func NewClientFromConfig(configPath string) (*BaseClient, error) {
+	cfg, err := config.LoadConfig(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config: %w", err)
+	}
+	
+	// 创建日志器
+	logConfig := &logger.Config{
+		Level:  logger.LogLevel(cfg.LogLevel),
+		Format: cfg.LogFormat,
+		Output: cfg.LogOutput,
+		FilePath: cfg.LogFile,
+	}
+	
+	log, err := logger.NewLogger(logConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create logger: %w", err)
+	}
+	
+	// 创建监控
+	metrics := metrics.NewMetrics(cfg.EnableMetrics)
+	
+	// 创建客户端配置
+	clientConfig := &ClientConfig{
+		BaseURL:             cfg.BaseURL,
+		AuthType:            AuthType(cfg.AuthType),
+		Token:               cfg.Token,
+		Timeout:             cfg.Timeout,
+		MaxRetries:          cfg.MaxRetries,
+		WorkspaceID:         &cfg.WorkspaceID,
+		Logger:              log,
+		Metrics:             metrics,
+		MaxIdleConns:        cfg.MaxIdleConns,
+		MaxIdleConnsPerHost: cfg.MaxIdleConnsPerHost,
+		IdleConnTimeout:     cfg.IdleConnTimeout,
+	}
+	
+	return NewBaseClient(clientConfig), nil
 }
 
 // Request 请求参数
@@ -93,9 +175,19 @@ type Response struct {
 
 // Do 执行HTTP请求
 func (c *BaseClient) Do(ctx context.Context, req *Request) (*Response, error) {
+	startTime := time.Now()
+	
+	// 记录请求开始
+	c.logger.WithFields(map[string]interface{}{
+		"method": req.Method,
+		"path":   req.Path,
+		"url":    c.config.BaseURL + req.Path,
+	}).Debug("Starting HTTP request")
+	
 	// 构建URL
 	u, err := url.Parse(c.config.BaseURL + req.Path)
 	if err != nil {
+		c.logger.WithError(err).Error("Failed to parse URL")
 		return nil, fmt.Errorf("invalid URL: %w", err)
 	}
 
@@ -160,24 +252,33 @@ func (c *BaseClient) Do(ctx context.Context, req *Request) (*Response, error) {
 
 	// 执行请求（带重试）
 	var resp *http.Response
+	var lastErr error
 	for i := 0; i <= c.config.MaxRetries; i++ {
 		resp, err = c.httpClient.Do(httpReq)
 		if err == nil && resp.StatusCode < 500 {
 			break
 		}
 
+		lastErr = err
+		c.logger.WithFields(map[string]interface{}{
+			"attempt": i + 1,
+			"max_retries": c.config.MaxRetries,
+			"error": err,
+		}).Warn("Request failed, retrying...")
+
 		if i < c.config.MaxRetries {
 			time.Sleep(time.Duration(i+1) * time.Second)
 		}
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+	if lastErr != nil {
+		c.logger.WithError(lastErr).Error("Request failed after all retries")
+		return nil, fmt.Errorf("request failed: %w", lastErr)
 	}
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
 			// 记录关闭错误，但不影响主流程
-			fmt.Printf("Warning: failed to close response body: %v\n", closeErr)
+					c.logger.WithError(closeErr).Warn("Failed to close response body")
 		}
 	}()
 
@@ -193,8 +294,23 @@ func (c *BaseClient) Do(ctx context.Context, req *Request) (*Response, error) {
 		Body:       respBody,
 	}
 
+	// 记录请求完成
+	duration := time.Since(startTime)
+	c.logger.WithFields(map[string]interface{}{
+		"status_code": resp.StatusCode,
+		"duration_ms": duration.Milliseconds(),
+		"body_size":   len(respBody),
+	}).Info("HTTP request completed")
+	
+	// 记录监控指标
+	c.metrics.RecordRequest(resp.StatusCode < 400, duration)
+	
 	// 检查错误响应
 	if resp.StatusCode >= 400 {
+		c.logger.WithFields(map[string]interface{}{
+			"status_code": resp.StatusCode,
+			"body":        string(respBody),
+		}).Error("HTTP request failed")
 		return response, c.parseError(response)
 	}
 
@@ -260,11 +376,29 @@ func (c *BaseClient) parseError(resp *Response) error {
 	var errResp errors.ErrorResponse
 	if err := json.Unmarshal(resp.Body, &errResp); err != nil {
 		// 如果无法解析为结构化错误，返回通用错误
+		c.logger.WithFields(map[string]interface{}{
+			"status_code": resp.StatusCode,
+			"body":        string(resp.Body),
+			"error":       err,
+		}).Warn("Failed to parse structured error response")
+		
+		// 记录错误类型
+		c.metrics.RecordError("parse_error")
+		
 		return &errors.APIError{
 			StatusCode: resp.StatusCode,
 			Message:    string(resp.Body),
 		}
 	}
+
+	// 记录特定错误类型
+	c.metrics.RecordError(errResp.Code)
+	
+	c.logger.WithFields(map[string]interface{}{
+		"status_code": resp.StatusCode,
+		"error_code":  errResp.Code,
+		"message":     errResp.Message,
+	}).Error("API error occurred")
 
 	return &errors.APIError{
 		StatusCode: resp.StatusCode,
