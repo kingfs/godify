@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/kingfs/godify/config"
 	"github.com/kingfs/godify/errors"
-	"github.com/kingfs/godify/logger"
 	"github.com/kingfs/godify/metrics"
 )
 
@@ -36,13 +36,10 @@ type ClientConfig struct {
 	MaxRetries int
 
 	WorkspaceID *string
-	
-	// 日志配置
-	Logger logger.Logger
-	
+
 	// 监控配置
 	Metrics *metrics.Metrics
-	
+
 	// 连接池配置
 	MaxIdleConns        int
 	MaxIdleConnsPerHost int
@@ -53,7 +50,7 @@ type ClientConfig struct {
 type BaseClient struct {
 	config     *ClientConfig
 	httpClient *http.Client
-	logger     logger.Logger
+	logger     *slog.Logger
 	metrics    *metrics.Metrics
 }
 
@@ -66,7 +63,7 @@ func NewBaseClient(config *ClientConfig) *BaseClient {
 			MaxIdleConnsPerHost: config.MaxIdleConnsPerHost,
 			IdleConnTimeout:     config.IdleConnTimeout,
 		}
-		
+
 		config.HTTPClient = &http.Client{
 			Timeout:   config.Timeout,
 			Transport: transport,
@@ -81,11 +78,6 @@ func NewBaseClient(config *ClientConfig) *BaseClient {
 		config.MaxRetries = 3
 	}
 
-	// 设置默认日志器
-	if config.Logger == nil {
-		config.Logger = logger.DefaultLogger
-	}
-	
 	// 设置默认监控
 	if config.Metrics == nil {
 		config.Metrics = metrics.NewMetrics(false) // 默认关闭监控
@@ -94,7 +86,7 @@ func NewBaseClient(config *ClientConfig) *BaseClient {
 	return &BaseClient{
 		config:     config,
 		httpClient: config.HTTPClient,
-		logger:     config.Logger,
+		logger:     slog.Default(),
 		metrics:    config.Metrics,
 	}
 }
@@ -111,6 +103,12 @@ func (c *BaseClient) WithToken(token string) *BaseClient {
 	return c
 }
 
+// WithLogger 设置日志器
+func (c *BaseClient) WithLogger(logger *slog.Logger) *BaseClient {
+	c.logger = logger
+	return c
+}
+
 // GetMetrics 获取监控指标
 func (c *BaseClient) GetMetrics() *metrics.Metrics {
 	return c.metrics
@@ -122,23 +120,10 @@ func NewClientFromConfig(configPath string) (*BaseClient, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
-	
-	// 创建日志器
-	logConfig := &logger.Config{
-		Level:  logger.LogLevel(cfg.LogLevel),
-		Format: cfg.LogFormat,
-		Output: cfg.LogOutput,
-		FilePath: cfg.LogFile,
-	}
-	
-	log, err := logger.NewLogger(logConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create logger: %w", err)
-	}
-	
+
 	// 创建监控
 	metrics := metrics.NewMetrics(cfg.EnableMetrics)
-	
+
 	// 创建客户端配置
 	clientConfig := &ClientConfig{
 		BaseURL:             cfg.BaseURL,
@@ -147,13 +132,12 @@ func NewClientFromConfig(configPath string) (*BaseClient, error) {
 		Timeout:             cfg.Timeout,
 		MaxRetries:          cfg.MaxRetries,
 		WorkspaceID:         &cfg.WorkspaceID,
-		Logger:              log,
 		Metrics:             metrics,
 		MaxIdleConns:        cfg.MaxIdleConns,
 		MaxIdleConnsPerHost: cfg.MaxIdleConnsPerHost,
 		IdleConnTimeout:     cfg.IdleConnTimeout,
 	}
-	
+
 	return NewBaseClient(clientConfig), nil
 }
 
@@ -176,18 +160,14 @@ type Response struct {
 // Do 执行HTTP请求
 func (c *BaseClient) Do(ctx context.Context, req *Request) (*Response, error) {
 	startTime := time.Now()
-	
+
 	// 记录请求开始
-	c.logger.WithFields(map[string]interface{}{
-		"method": req.Method,
-		"path":   req.Path,
-		"url":    c.config.BaseURL + req.Path,
-	}).Debug("Starting HTTP request")
-	
+	c.logger.DebugContext(ctx, "Starting HTTP request", "method", req.Method, "path", req.Path, "url", c.config.BaseURL+req.Path)
+
 	// 构建URL
 	u, err := url.Parse(c.config.BaseURL + req.Path)
 	if err != nil {
-		c.logger.WithError(err).Error("Failed to parse URL")
+		c.logger.ErrorContext(ctx, "Failed to parse URL", "error", err)
 		return nil, fmt.Errorf("invalid URL: %w", err)
 	}
 
@@ -260,11 +240,7 @@ func (c *BaseClient) Do(ctx context.Context, req *Request) (*Response, error) {
 		}
 
 		lastErr = err
-		c.logger.WithFields(map[string]interface{}{
-			"attempt": i + 1,
-			"max_retries": c.config.MaxRetries,
-			"error": err,
-		}).Warn("Request failed, retrying...")
+		c.logger.WarnContext(ctx, "Request failed, retrying...", "attempt", i+1, "max_retries", c.config.MaxRetries, "error", err)
 
 		if i < c.config.MaxRetries {
 			time.Sleep(time.Duration(i+1) * time.Second)
@@ -272,13 +248,13 @@ func (c *BaseClient) Do(ctx context.Context, req *Request) (*Response, error) {
 	}
 
 	if lastErr != nil {
-		c.logger.WithError(lastErr).Error("Request failed after all retries")
+		c.logger.ErrorContext(ctx, "Request failed after all retries", "error", lastErr)
 		return nil, fmt.Errorf("request failed: %w", lastErr)
 	}
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
 			// 记录关闭错误，但不影响主流程
-					c.logger.WithError(closeErr).Warn("Failed to close response body")
+			c.logger.WarnContext(ctx, "Failed to close response body", "error", closeErr)
 		}
 	}()
 
@@ -296,22 +272,15 @@ func (c *BaseClient) Do(ctx context.Context, req *Request) (*Response, error) {
 
 	// 记录请求完成
 	duration := time.Since(startTime)
-	c.logger.WithFields(map[string]interface{}{
-		"status_code": resp.StatusCode,
-		"duration_ms": duration.Milliseconds(),
-		"body_size":   len(respBody),
-	}).Info("HTTP request completed")
-	
+	c.logger.DebugContext(ctx, "HTTP request completed", "status_code", resp.StatusCode, "duration_ms", duration.Milliseconds(), "body_size", len(respBody))
+
 	// 记录监控指标
 	c.metrics.RecordRequest(resp.StatusCode < 400, duration)
-	
+
 	// 检查错误响应
 	if resp.StatusCode >= 400 {
-		c.logger.WithFields(map[string]interface{}{
-			"status_code": resp.StatusCode,
-			"body":        string(respBody),
-		}).Error("HTTP request failed")
-		return response, c.parseError(response)
+		c.logger.ErrorContext(ctx, "HTTP request failed", "status_code", resp.StatusCode, "body", string(respBody))
+		return response, c.parseError(ctx, response)
 	}
 
 	return response, nil
@@ -372,19 +341,15 @@ func (c *BaseClient) UploadFile(ctx context.Context, path string, fieldName stri
 }
 
 // parseError 解析错误响应
-func (c *BaseClient) parseError(resp *Response) error {
+func (c *BaseClient) parseError(ctx context.Context, resp *Response) error {
 	var errResp errors.ErrorResponse
 	if err := json.Unmarshal(resp.Body, &errResp); err != nil {
 		// 如果无法解析为结构化错误，返回通用错误
-		c.logger.WithFields(map[string]interface{}{
-			"status_code": resp.StatusCode,
-			"body":        string(resp.Body),
-			"error":       err,
-		}).Warn("Failed to parse structured error response")
-		
+		c.logger.WarnContext(ctx, "Failed to parse structured error response", "status_code", resp.StatusCode, "body", string(resp.Body), "error", err)
+
 		// 记录错误类型
 		c.metrics.RecordError("parse_error")
-		
+
 		return &errors.APIError{
 			StatusCode: resp.StatusCode,
 			Message:    string(resp.Body),
@@ -393,12 +358,8 @@ func (c *BaseClient) parseError(resp *Response) error {
 
 	// 记录特定错误类型
 	c.metrics.RecordError(errResp.Code)
-	
-	c.logger.WithFields(map[string]interface{}{
-		"status_code": resp.StatusCode,
-		"error_code":  errResp.Code,
-		"message":     errResp.Message,
-	}).Error("API error occurred")
+
+	c.logger.ErrorContext(ctx, "API error occurred", "status_code", resp.StatusCode, "error_code", errResp.Code, "message", errResp.Message)
 
 	return &errors.APIError{
 		StatusCode: resp.StatusCode,

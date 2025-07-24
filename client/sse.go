@@ -27,17 +27,14 @@ type SSEHandler interface {
 // StreamResponse 流式响应处理
 func (c *BaseClient) StreamResponse(ctx context.Context, req *Request, handler SSEHandler) error {
 	startTime := time.Now()
-	
+
 	// 记录流式请求开始
-	c.logger.WithFields(map[string]interface{}{
-		"method": req.Method,
-		"path":   req.Path,
-	}).Info("Starting streaming request")
-	
+	c.logger.InfoContext(ctx, "Starting streaming request", "method", req.Method, "path", req.Path)
+
 	// 执行请求
 	resp, err := c.Do(ctx, req)
 	if err != nil {
-		c.logger.WithError(err).Error("Streaming request failed")
+		c.logger.ErrorContext(ctx, "Streaming request failed", "error", err)
 		return err
 	}
 
@@ -45,22 +42,22 @@ func (c *BaseClient) StreamResponse(ctx context.Context, req *Request, handler S
 	contentType := resp.Headers.Get("Content-Type")
 	if !strings.Contains(contentType, "text/event-stream") && !strings.Contains(contentType, "text/plain") {
 		err := fmt.Errorf("unexpected content type for streaming response: %s", contentType)
-		c.logger.WithError(err).Error("Invalid content type for streaming")
+		c.logger.ErrorContext(ctx, "Invalid content type for streaming", "error", err)
 		return err
 	}
 
 	// 记录监控指标
 	duration := time.Since(startTime)
 	c.metrics.RecordRequest(true, duration)
-	
+
 	// 解析SSE流
-	return c.parseSSEStream(resp.Body, handler)
+	return c.parseSSEStream(ctx, resp.Body, handler)
 }
 
 // parseSSEStream 解析SSE数据流
-func (c *BaseClient) parseSSEStream(data []byte, handler SSEHandler) error {
+func (c *BaseClient) parseSSEStream(ctx context.Context, data []byte, handler SSEHandler) error {
 	defer func() {
-		c.logger.Info("SSE stream parsing completed")
+		c.logger.InfoContext(ctx, "SSE stream parsing completed")
 		handler.OnComplete()
 	}()
 
@@ -68,7 +65,7 @@ func (c *BaseClient) parseSSEStream(data []byte, handler SSEHandler) error {
 	var event SSEEvent
 	eventCount := 0
 
-	c.logger.Debug("Starting SSE stream parsing")
+	c.logger.DebugContext(ctx, "Starting SSE stream parsing")
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -77,14 +74,10 @@ func (c *BaseClient) parseSSEStream(data []byte, handler SSEHandler) error {
 		if line == "" {
 			if event.Data != "" || event.Event != "" {
 				eventCount++
-				c.logger.WithFields(map[string]interface{}{
-					"event_type": event.Event,
-					"event_id":   event.ID,
-					"data_size":  len(event.Data),
-				}).Debug("Processing SSE event")
-				
+				c.logger.DebugContext(ctx, "Processing SSE event", "event_type", event.Event, "event_id", event.ID, "data_size", len(event.Data))
+
 				if err := handler.OnEvent(&event); err != nil {
-					c.logger.WithError(err).Error("Failed to process SSE event")
+					c.logger.ErrorContext(ctx, "Failed to process SSE event", "error", err)
 					handler.OnError(err)
 					return err
 				}
@@ -106,12 +99,12 @@ func (c *BaseClient) parseSSEStream(data []byte, handler SSEHandler) error {
 	}
 
 	if err := scanner.Err(); err != nil {
-		c.logger.WithError(err).Error("SSE stream scanning error")
+		c.logger.ErrorContext(ctx, "SSE stream scanning error", "error", err)
 		handler.OnError(err)
 		return err
 	}
 
-	c.logger.WithField("event_count", eventCount).Info("SSE stream parsing completed successfully")
+	c.logger.InfoContext(ctx, "SSE stream parsing completed successfully", "event_count", eventCount)
 	return nil
 }
 

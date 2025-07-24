@@ -3,35 +3,34 @@ package metrics
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Metrics 指标收集器
 type Metrics struct {
 	mu sync.RWMutex
-	
+
 	// 请求统计
-	TotalRequests    int64
+	TotalRequests      int64
 	SuccessfulRequests int64
-	FailedRequests   int64
-	
+	FailedRequests     int64
+
 	// 响应时间统计
 	ResponseTimes []time.Duration
-	
+
 	// 错误统计
 	ErrorCounts map[string]int64
-	
+
 	// 连接统计
 	ActiveConnections int64
 	TotalConnections  int64
-	
+
 	// 配置
 	enabled bool
-	logger  *logrus.Logger
+	logger  *slog.Logger
 }
 
 // NewMetrics 创建新的指标收集器
@@ -39,7 +38,7 @@ func NewMetrics(enabled bool) *Metrics {
 	return &Metrics{
 		ErrorCounts: make(map[string]int64),
 		enabled:     enabled,
-		logger:      logrus.New(),
+		logger:      slog.Default(),
 	}
 }
 
@@ -48,19 +47,19 @@ func (m *Metrics) RecordRequest(success bool, duration time.Duration) {
 	if !m.enabled {
 		return
 	}
-	
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	m.TotalRequests++
 	if success {
 		m.SuccessfulRequests++
 	} else {
 		m.FailedRequests++
 	}
-	
+
 	m.ResponseTimes = append(m.ResponseTimes, duration)
-	
+
 	// 保持响应时间数组在合理大小
 	if len(m.ResponseTimes) > 1000 {
 		m.ResponseTimes = m.ResponseTimes[1:]
@@ -72,10 +71,10 @@ func (m *Metrics) RecordError(errorType string) {
 	if !m.enabled {
 		return
 	}
-	
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	m.ErrorCounts[errorType]++
 }
 
@@ -84,10 +83,10 @@ func (m *Metrics) RecordConnection(active bool) {
 	if !m.enabled {
 		return
 	}
-	
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	m.TotalConnections++
 	if active {
 		m.ActiveConnections++
@@ -100,7 +99,7 @@ func (m *Metrics) RecordConnection(active bool) {
 func (m *Metrics) GetStats() map[string]interface{} {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	stats := map[string]interface{}{
 		"total_requests":      m.TotalRequests,
 		"successful_requests": m.SuccessfulRequests,
@@ -109,7 +108,7 @@ func (m *Metrics) GetStats() map[string]interface{} {
 		"active_connections":  m.ActiveConnections,
 		"total_connections":   m.TotalConnections,
 	}
-	
+
 	// 计算平均响应时间
 	if len(m.ResponseTimes) > 0 {
 		var total time.Duration
@@ -120,12 +119,12 @@ func (m *Metrics) GetStats() map[string]interface{} {
 		stats["min_response_time"] = m.minResponseTime()
 		stats["max_response_time"] = m.maxResponseTime()
 	}
-	
+
 	// 计算成功率
 	if m.TotalRequests > 0 {
 		stats["success_rate"] = float64(m.SuccessfulRequests) / float64(m.TotalRequests) * 100
 	}
-	
+
 	return stats
 }
 
@@ -134,7 +133,7 @@ func (m *Metrics) minResponseTime() time.Duration {
 	if len(m.ResponseTimes) == 0 {
 		return 0
 	}
-	
+
 	min := m.ResponseTimes[0]
 	for _, duration := range m.ResponseTimes {
 		if duration < min {
@@ -149,7 +148,7 @@ func (m *Metrics) maxResponseTime() time.Duration {
 	if len(m.ResponseTimes) == 0 {
 		return 0
 	}
-	
+
 	max := m.ResponseTimes[0]
 	for _, duration := range m.ResponseTimes {
 		if duration > max {
@@ -164,22 +163,22 @@ func (m *Metrics) StartMetricsServer(ctx context.Context, port int) error {
 	if !m.enabled {
 		return nil
 	}
-	
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/metrics", m.handleMetrics)
 	mux.HandleFunc("/health", m.handleHealth)
-	
+
 	server := &http.Server{
 		Addr:    ":" + fmt.Sprintf("%d", port),
 		Handler: mux,
 	}
-	
+
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			m.logger.Errorf("metrics server error: %v", err)
+			m.logger.ErrorContext(ctx, "metrics server error", "error", err)
 		}
 	}()
-	
+
 	// 等待上下文取消
 	<-ctx.Done()
 	return server.Shutdown(context.Background())
@@ -189,7 +188,7 @@ func (m *Metrics) StartMetricsServer(ctx context.Context, port int) error {
 func (m *Metrics) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	
+
 	// 这里可以返回Prometheus格式的指标
 	// 为了简单起见，返回JSON格式
 	response := `{
@@ -199,7 +198,7 @@ func (m *Metrics) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		"success_rate": %.2f,
 		"avg_response_time_ms": %.2f
 	}`
-	
+
 	avgTime := float64(0)
 	if len(m.ResponseTimes) > 0 {
 		var total time.Duration
@@ -208,15 +207,15 @@ func (m *Metrics) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		}
 		avgTime = float64(total) / float64(len(m.ResponseTimes)) / float64(time.Millisecond)
 	}
-	
+
 	successRate := float64(0)
 	if m.TotalRequests > 0 {
 		successRate = float64(m.SuccessfulRequests) / float64(m.TotalRequests) * 100
 	}
-	
-	w.Write([]byte(fmt.Sprintf(response, 
-		m.TotalRequests, 
-		m.SuccessfulRequests, 
+
+	w.Write([]byte(fmt.Sprintf(response,
+		m.TotalRequests,
+		m.SuccessfulRequests,
 		m.FailedRequests,
 		successRate,
 		avgTime)))

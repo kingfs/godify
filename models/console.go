@@ -189,11 +189,17 @@ type LoginRequest struct {
 	Language    string `json:"language,omitempty"`
 }
 
+// TokenPair 令牌对
+type TokenPair struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 // LoginResponse 登录响应
 type LoginResponse struct {
-	Result string      `json:"result"`
-	Data   interface{} `json:"data,omitempty"`
-	Code   string      `json:"code,omitempty"`
+	Result string    `json:"result"`
+	Data   TokenPair `json:"data,omitempty"`
+	Code   string    `json:"code,omitempty"`
 }
 
 // APIKey API密钥

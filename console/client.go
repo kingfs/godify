@@ -58,7 +58,7 @@ func (c *Client) WithWorkspaceID(workspaceID string) *Client {
 func (c *Client) Login(ctx context.Context, req *models.LoginRequest) (*models.LoginResponse, error) {
 	httpReq := &client.Request{
 		Method: "POST",
-		Path:   "/auth/login",
+		Path:   "/login",
 		Body:   req,
 	}
 
