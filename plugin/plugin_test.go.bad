@@ -7,23 +7,12 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/joho/godotenv"
 )
 
-func loadEnv() {
-	err := godotenv.Load("../.env")
-	if err != nil {
-		panic("加载.env文件失败: " + err.Error())
-	}
-}
-
-
 func NewTestClient() *Client {
-	loadEnv()
-	baseURL       := os.Getenv("base_url")
+	baseURL := os.Getenv("base_url")
 	authorization := os.Getenv("authorization")
-	workspaceId   := os.Getenv("workspace_id")
+	workspaceId := os.Getenv("workspace_id")
 	fmt.Println("baseURL", baseURL)
 	fmt.Println("authorization", authorization)
 	fmt.Println("workspaceId", workspaceId)

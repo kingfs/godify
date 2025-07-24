@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/kingfs/godify/service"
 )
 
@@ -16,10 +15,6 @@ var (
 
 // 每个测试函数中单独加载godotenv
 func getServiceClient(t *testing.T) *service.Client {
-	err := godotenv.Load()
-	if err != nil {
-		t.Fatalf("加载.env文件失败: %v", err)
-	}
 	baseURL := os.Getenv("GODIFY_BASE_URL")
 	appToken := os.Getenv("GODIFY_APP_TOKEN")
 	return service.NewClient(appToken, baseURL)
