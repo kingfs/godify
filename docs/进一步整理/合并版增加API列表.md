@@ -1,0 +1,190 @@
+## 合并版中多余的API接口
+
+以下接口在 `完整API路径列表-合并版.md` 中存在，但在 `完整API路径列表.md` 中不存在：
+
+### Service API
+- `GET /v1/` - 首页/健康检查
+- `GET /v1/app/feedbacks` - 获取应用反馈
+- `POST /v1/datasets/{dataset_id}/retrieve` - 数据集检索
+- `POST /v1/datasets/{dataset_id}/documents/{document_id}/upload-file` - 上传文档文件
+- `GET /v1/datasets/{dataset_id}/documents/{batch}/indexing-status` - 获取文档索引状态
+- `POST /v1/datasets/{dataset_id}/documents/{document_id}/segments` - 添加文档分段
+- `POST /v1/datasets/{dataset_id}/documents/status/{action}` - 批量操作文档状态
+- `GET /v1/datasets/tags` - 获取数据集标签
+- `POST /v1/datasets/tags/binding` - 绑定数据集标签
+- `POST /v1/datasets/tags/unbinding` - 解绑数据集标签
+- `GET /v1/datasets/{dataset_id}/tags` - 获取数据集标签绑定状态
+- `POST /v1/datasets/{dataset_id}/metadata` - 创建元数据
+- `GET /v1/datasets/{dataset_id}/metadata/{metadata_id}` - 获取元数据详情
+- `GET /v1/datasets/metadata/built-in` - 获取内置元数据字段
+- `POST /v1/datasets/{dataset_id}/documents/metadata` - 获取文档元数据
+
+### Web API
+- `GET /web/api/system-features` - 获取系统功能
+- `POST /web/api/login` - 登录
+- `POST /web/api/email-code-login` - 发送邮箱验证码
+- `POST /web/api/email-code-login/validity` - 校验邮箱验证码
+- `POST /web/api/forgot-password` - 忘记密码发送邮件
+- `POST /web/api/forgot-password/validity` - 校验忘记密码验证码
+- `POST /web/api/forgot-password/resets` - 重置密码
+- `POST /web/api/passport` - 通行证登录
+- `POST /web/api/conversations/{c_id}/pin` - 置顶会话
+- `POST /web/api/conversations/{c_id}/unpin` - 取消置顶
+
+### Console API
+- `GET /console/api/features` - 获取功能列表
+- `GET /console/api/system-features` - 获取系统功能
+- `POST /console/api/admin/insert-explore-apps` - 插入探索应用列表
+- `POST /console/api/admin/insert-explore-apps/{app_id}` - 插入单个探索应用
+- `POST /console/api/init` - 初始化校验
+- `POST /console/api/setup` - 系统初始化
+- `GET /console/api/version` - 获取版本信息
+- `GET /console/api/files/support-type` - 获取支持的文件类型
+- `GET /console/api/remote-files/{url}` - 获取远程文件信息
+- `POST /console/api/remote-files/upload` - 上传远程文件
+- `GET /console/api/datasets/{resource_id}/api-keys` - 获取数据集 API Key 列表
+- `POST /console/api/datasets/{resource_id}/api-keys` - 创建数据集 API Key
+- `DELETE /console/api/datasets/{resource_id}/api-keys/{api_key_id}` - 删除数据集 API Key
+- `GET /console/api/explore/apps` - 获取推荐应用列表
+- `GET /console/api/explore/apps/{app_id}` - 获取推荐应用详情
+- `GET /console/api/installed-apps` - 获取已安装应用列表
+- `GET /console/api/installed-apps/{installed_app_id}` - 获取已安装应用详情
+- `GET /console/api/installed-apps/{installed_app_id}/meta` - 获取已安装应用元信息
+- `POST /console/api/installed-apps/{installed_app_id}/audio-to-text` - 音频转文本
+- `POST /console/api/installed-apps/{installed_app_id}/text-to-audio` - 文本转音频
+- `GET /console/api/installed-apps/{installed_app_id}/messages` - 获取消息列表
+- `POST /console/api/installed-apps/{installed_app_id}/workflows/run` - 运行工作流
+- `POST /console/api/login` - 登录
+- `POST /console/api/logout` - 登出
+- `POST /console/api/email-code-login` - 邮箱验证码登录
+- `POST /console/api/email-code-login/validity` - 校验邮箱验证码
+- `POST /console/api/reset-password` - 重置密码
+- `POST /console/api/refresh-token` - 刷新 token
+- `POST /console/api/forgot-password` - 忘记密码发送邮件
+- `POST /console/api/forgot-password/validity` - 校验忘记密码验证码
+- `POST /console/api/forgot-password/resets` - 重置密码
+- `POST /console/api/activate/check` - 校验激活
+- `POST /console/api/activate` - 激活账户
+- `POST /console/api/oauth/login/{provider}` - 第三方登录
+- `POST /console/api/oauth/authorize/{provider}` - 第三方授权回调
+- `POST /console/api/api-key-auth/data-source` - API Key 数据源认证
+- `POST /console/api/api-key-auth/data-source/binding` - API Key 数据源绑定
+- `DELETE /console/api/api-key-auth/data-source/{binding_id}` - 删除 API Key 数据源绑定
+- `POST /console/api/oauth/data-source/{provider}` - OAuth 数据源认证
+- `POST /console/api/oauth/data-source/callback/{provider}` - OAuth 数据源回调
+- `POST /console/api/oauth/data-source/binding/{provider}` - OAuth 数据源绑定
+- `POST /console/api/oauth/data-source/{provider}/{binding_id}/sync` - OAuth 数据源同步
+- `POST /console/api/datasets/{dataset_id}/external-hit-testing` - 外部知识命中测试
+- `POST /console/api/datasets/external` - 创建外部数据集
+- `GET /console/api/datasets/external-knowledge-api` - 获取外部知识 API 模板列表
+- `GET /console/api/datasets/external-knowledge-api/{external_knowledge_api_id}` - 获取外部知识 API 模板详情
+- `POST /console/api/datasets/external-knowledge-api/{external_knowledge_api_id}/use-check` - 检查外部知识 API 使用情况
+- `POST /console/api/datasets/{dataset_id}/notion/sync` - Notion 数据同步
+- `GET /console/api/datasets/{dataset_id}/metadata` - 获取数据集元数据
+- `GET /console/api/datasets/{dataset_id}/metadata/{metadata_id}` - 获取指定元数据
+- `GET /console/api/datasets/metadata/built-in` - 获取内置元数据字段
+- `POST /console/api/datasets/{dataset_id}/metadata/built-in/{action}` - 操作内置元数据字段
+- `POST /console/api/datasets/{dataset_id}/documents/metadata` - 获取文档元数据
+- `GET /console/api/datasets/{dataset_id}/documents/{document_id}/segments` - 获取文档分段
+- `POST /console/api/datasets/{dataset_id}/documents/{document_id}/segment` - 添加文档分段
+- `GET /console/api/datasets/{dataset_id}/documents/{document_id}/indexing-status` - 获取文档索引状态
+- `POST /console/api/datasets/{dataset_id}/documents/{document_id}/website-sync` - 文档网站同步
+- `POST /console/api/datasets/{dataset_id}/documents/status/{action}/batch` - 批量操作文档状态
+- `POST /console/api/datasets/{dataset_id}/documents/{document_id}/processing/pause` - 暂停文档处理
+- `POST /console/api/datasets/{dataset_id}/documents/{document_id}/processing/resume` - 恢复文档处理
+- `POST /console/api/datasets/{dataset_id}/retry` - 文档重试
+- `POST /console/api/datasets/{dataset_id}/documents/{document_id}/rename` - 重命名文档
+- `POST /console/api/datasets/process-rule` - 获取处理规则
+- `POST /console/api/datasets/init` - 初始化数据集
+- `POST /console/api/datasets/{dataset_id}/batch/{batch}/indexing-estimate` - 批量索引估算
+- `POST /console/api/datasets/{dataset_id}/batch/{batch}/indexing-status` - 批量索引状态
+- `POST /console/api/datasets/{dataset_id}/error-docs` - 获取错误文档
+- `POST /console/api/datasets/indexing-estimate` - 索引估算
+- `POST /console/api/datasets/{dataset_id}/related-apps` - 获取相关应用
+- `POST /console/api/datasets/{dataset_id}/indexing-status` - 获取索引状态
+- `POST /console/api/datasets/api-keys` - 获取 API Key
+- `DELETE /console/api/datasets/api-keys/{api_key_id}` - 删除 API Key
+- `POST /console/api/datasets/api-base-info` - 获取 API 基础信息
+- `POST /console/api/datasets/retrieval-setting` - 获取检索设置
+- `POST /console/api/datasets/retrieval-setting/{vector_type}` - 获取指定类型检索设置
+- `POST /console/api/datasets/{dataset_id}/permission-part-users` - 获取部分用户权限
+- `POST /console/api/datasets/{dataset_id}/auto-disable-logs` - 获取自动禁用日志
+- `GET /console/api/workspaces/current/model-providers/{provider}/models` - 获取模型列表
+- `GET /console/api/workspaces/current/default-model` - 获取默认模型
+- `GET /console/api/workspaces/current/tool-providers` - 获取工具提供商列表
+- `GET /console/api/workspaces/current/tool-provider/builtin/{provider}/tools` - 获取内置工具列表
+- `GET /console/api/workspaces/current/tool-provider/builtin/{provider}/info` - 获取内置工具信息
+- `DELETE /console/api/workspaces/current/tool-provider/builtin/{provider}/delete` - 删除内置工具
+- `POST /console/api/workspaces/current/tool-provider/builtin/{provider}/update` - 更新内置工具
+- `GET /console/api/workspaces/current/tool-provider/builtin/{provider}/icon` - 获取内置工具图标
+- `POST /console/api/workspaces/current/tool-provider/api/add` - 添加 API 工具
+- `GET /console/api/workspaces/current/tool-provider/api/remote` - 获取远程 API 工具 schema
+- `GET /console/api/workspaces/current/tool-provider/api/tools` - 获取 API 工具列表
+- `POST /console/api/workspaces/current/tool-provider/api/update` - 更新 API 工具
+- `DELETE /console/api/workspaces/current/tool-provider/api/delete` - 删除 API 工具
+- `GET /console/api/workspaces/current/tool-provider/api/get` - 获取 API 工具
+- `GET /console/api/workspaces/current/tool-provider/api/schema` - 获取 API 工具 schema
+- `POST /console/api/workspaces/current/tool-provider/api/test/pre` - 预测试 API 工具
+- `POST /console/api/workspaces/current/tool-provider/workflow/create` - 创建工作流工具
+- `POST /console/api/workspaces/current/tool-provider/workflow/update` - 更新工作流工具
+- `DELETE /console/api/workspaces/current/tool-provider/workflow/delete` - 删除工作流工具
+- `GET /console/api/workspaces/current/tool-provider/workflow/get` - 获取工作流工具
+- `POST /console/api/workspaces/current/endpoints/create` - 创建端点
+- `GET /console/api/workspaces/current/endpoints/list` - 获取端点列表
+- `GET /console/api/workspaces/current/endpoints/list/plugin` - 获取插件端点列表
+- `DELETE /console/api/workspaces/current/endpoints/delete` - 删除端点
+- `POST /console/api/workspaces/current/endpoints/update` - 更新端点
+- `POST /console/api/workspaces/current/endpoints/enable` - 启用端点
+- `POST /console/api/workspaces/current/endpoints/disable` - 禁用端点
+- `POST /console/api/code-based-extension` - 代码扩展
+- `POST /console/api/api-based-extension` - API 扩展
+- `GET /console/api/api-based-extension/{id}` - 获取 API 扩展详情
+- `GET /console/api/tags` - 获取标签列表
+- `PUT /console/api/tags/{tag_id}` - 更新/删除标签
+- `POST /console/api/tag-bindings/create` - 创建标签绑定
+- `POST /console/api/tag-bindings/remove` - 移除标签绑定
+- `GET /console/api/compliance/download` - 下载合规文件
+- `GET /console/api/billing/subscription` - 获取订阅信息
+- `GET /console/api/billing/invoices` - 获取发票信息
+- `POST /console/api/apps/imports` - 导入应用
+- `POST /console/api/apps/imports/{import_id}/confirm` - 确认导入
+- `POST /console/api/apps/imports/{app_id}/check-dependencies` - 检查依赖
+- `GET /console/api/apps/{app_id}/server` - 获取 MCP server 信息
+- `POST /console/api/apps/{server_id}/server/refresh` - 刷新 MCP server
+- `GET /console/api/apps/{app_id}/workflow-app-logs` - 获取工作流日志
+- `POST /console/api/test/retrieval` - Bedrock 检索测试 
+- `GET /console/api/apps/{app_id}/completion-conversations` - 获取补全会话列表
+- `GET /console/api/apps/{app_id}/completion-conversations/{conversation_id}` - 获取补全会话详情
+- `GET /console/api/apps/{app_id}/chat-conversations` - 获取聊天会话列表
+- `GET /console/api/apps/{app_id}/chat-conversations/{conversation_id}` - 获取聊天会话详情
+- `GET /console/api/apps/{app_id}/conversation-variables` - 获取会话变量
+
+### Files API
+- `GET /files/api/files/<file_id>/image-preview` - 获取图片预览
+- `GET /files/api/files/<file_id>/file-preview` - 获取文件预览
+- `GET /files/api/files/workspaces/<workspace_id>/webapp-logo` - 获取工作区 webapp logo
+- `POST /files/api/files/upload/for-plugin` - 插件文件上传
+- `GET /files/api/files/tools/<file_id>.<extension>` - 工具文件预览
+
+### MCP API
+- `POST /mcp/api/server/{server_code}/mcp` - MCP 服务端接口
+
+### Inner API
+- `POST /inner/api/enterprise/mail` - 企业邮件相关操作
+- `GET /inner/api/enterprise/workspace` - 获取企业工作区信息
+- `GET /inner/api/enterprise/workspace/ownerless` - 获取无拥有者的企业工作区
+- `POST /inner/api/invoke/llm` - 插件 LLM 调用
+- `POST /inner/api/invoke/llm/structured-output` - 插件 LLM 结构化输出调用
+- `POST /inner/api/invoke/text-embedding` - 插件文本嵌入调用
+- `POST /inner/api/invoke/rerank` - 插件重排序调用
+- `POST /inner/api/invoke/tts` - 插件文本转语音调用
+- `POST /inner/api/invoke/speech2text` - 插件语音转文本调用
+- `POST /inner/api/invoke/moderation` - 插件内容审核调用
+- `POST /inner/api/invoke/tool` - 插件工具调用
+- `POST /inner/api/invoke/parameter-extractor` - 插件参数提取节点调用
+- `POST /inner/api/invoke/question-classifier` - 插件问题分类节点调用
+- `POST /inner/api/invoke/app` - 插件应用反向调用
+- `POST /inner/api/invoke/encrypt` - 插件加密调用
+- `POST /inner/api/invoke/summary` - 插件摘要调用
+- `POST /inner/api/upload/file/request` - 插件文件上传请求
+- `GET /inner/api/fetch/app/info` - 获取插件应用信息 

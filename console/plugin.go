@@ -1,10 +1,9 @@
-package plugin
+package console
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"context"
 	"encoding/json"
@@ -14,25 +13,7 @@ import (
 	"github.com/kingfs/godify/models"
 )
 
-type Client struct {
-	baseClient *client.BaseClient
-}
-
-func PluginNewClient(baseURL string, authorization string, workspace_id string) *Client {
-	config := &client.ClientConfig{
-		BaseURL:    baseURL + "/console/api/workspaces/current/plugin",
-		AuthType:   client.AuthTypeBearer,
-		Token:      authorization,
-		Timeout:    30 * time.Second,
-		MaxRetries: 3,
-		WorkspaceID: &workspace_id,
-	}
-
-	return &Client{
-		baseClient: client.NewBaseClient(config),
-	}
-}
-
+var pluginURLPrefix string = "/workspaces/current/plugin"
 
 // PluginList 获取插件列表
 func (c *Client) PluginList(ctx context.Context, page, pageSize int) (*models.PluginListResponse, error) {
@@ -52,21 +33,24 @@ func (c *Client) PluginList(ctx context.Context, page, pageSize int) (*models.Pl
 
 // PluginUploadPkg 上传插件包（pkg文件）
 func (c *Client) PluginUploadPkg(ctx context.Context, filename string, fileData []byte) (string, error) {
-	resp, err := c.baseClient.UploadFile(ctx, "/upload/pkg", "pkg", filename, fileData, nil)
+	req := &client.Request{
+		Path:   pluginURLPrefix + "/upload/pkg",
+	}
+	resp, err := c.baseClient.UploadFile(ctx, req.Path, "pkg", filename, fileData, nil)
 	if err != nil {
 		return "", err
 	}
-	var result map[string]interface{}
+	var result struct {
+		UniqueIdentifier string `json:"unique_identifier"`
+	}
 	err = json.Unmarshal(resp.Body, &result)
 	if err != nil {
 		return "", err
 	}
-	// 从返回值中提取 unique_identifier
-	uniqueIdentifier, ok := result["unique_identifier"].(string)
-	if !ok {
+	if result.UniqueIdentifier == "" {
 		return "", fmt.Errorf("未找到 unique_identifier 字段或类型错误")
 	}
-	return uniqueIdentifier, nil
+	return result.UniqueIdentifier, nil
 }
 
 // PluginInstallFromPkg 安装插件（本地包）

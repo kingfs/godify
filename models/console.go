@@ -282,3 +282,154 @@ type SiteInfo struct {
 	UpdatedBy              string   `json:"updated_by"`
 	UpdatedAt              UnixTime `json:"updated_at"`
 }
+
+// AppsChatMessageListApiResponse 聊天消息列表响应
+// 对应 /apps/<uuid:app_id>/chat-messages 接口
+// 参考返回示例结构体
+
+type AppsChatMessageListApiResponse struct {
+	Data    []AppsChatMessage `json:"data"`
+	HasMore bool              `json:"has_more"`
+	Limit   int               `json:"limit"`
+}
+
+type AppsChatMessage struct {
+	AgentThoughts         []interface{}        `json:"agent_thoughts"`
+	Annotation            interface{}          `json:"annotation"`
+	AnnotationHitHistory  interface{}          `json:"annotation_hit_history"`
+	Answer                string               `json:"answer"`
+	AnswerTokens          int                  `json:"answer_tokens"`
+	ConversationID        string               `json:"conversation_id"`
+	CreatedAt             float64              `json:"created_at"`
+	Error                 interface{}          `json:"error"`
+	Feedbacks             []interface{}        `json:"feedbacks"`
+	FromAccountID         string               `json:"from_account_id"`
+	FromEndUserID         interface{}          `json:"from_end_user_id"`
+	FromSource            string               `json:"from_source"`
+	ID                    string               `json:"id"`
+	Inputs                map[string]interface{} `json:"inputs"`
+	Message               []AppsMessage        `json:"message"`
+	MessageFiles          []interface{}        `json:"message_files"`
+	MessageTokens         int                  `json:"message_tokens"`
+	Metadata              map[string]interface{} `json:"metadata"`
+	ParentMessageID       interface{}          `json:"parent_message_id"`
+	ProviderResponseLatency float64            `json:"provider_response_latency"`
+	Query                 string               `json:"query"`
+	Status                string               `json:"status"`
+	WorkflowRunID         interface{}          `json:"workflow_run_id"`
+}
+
+type AppsMessage struct {
+	Files []interface{} `json:"files"`
+	Role  string        `json:"role"`
+	Text  string        `json:"text"`
+}
+
+// AppsMessageApiResponse 消息详情响应
+// 对应 /apps/<uuid:app_id>/messages/<uuid:message_id> 接口
+// 参考返回示例结构体
+
+type AppsMessageApiResponse struct {
+	AgentThoughts        []interface{}          `json:"agent_thoughts"`
+	Annotation           interface{}            `json:"annotation"`
+	AnnotationHitHistory interface{}            `json:"annotation_hit_history"`
+	Answer               string                 `json:"answer"`
+	AnswerTokens         int                    `json:"answer_tokens"`
+	ConversationID       string                 `json:"conversation_id"`
+	CreatedAt            float64                `json:"created_at"`
+	Error                interface{}            `json:"error"`
+	Feedbacks            []interface{}          `json:"feedbacks"`
+	FromAccountID        string                 `json:"from_account_id"`
+	FromEndUserID        interface{}            `json:"from_end_user_id"`
+	FromSource           string                 `json:"from_source"`
+	ID                   string                 `json:"id"`
+	Inputs               map[string]interface{} `json:"inputs"`
+	Message              []AppsMessage          `json:"message"`
+	MessageFiles         []interface{}          `json:"message_files"`
+	MessageTokens        int                    `json:"message_tokens"`
+	Metadata             map[string]interface{} `json:"metadata"`
+	ParentMessageID      interface{}            `json:"parent_message_id"`
+	ProviderResponseLatency float64             `json:"provider_response_latency"`
+	Query                string                 `json:"query"`
+	Status               string                 `json:"status"`
+	WorkflowRunID        interface{}            `json:"workflow_run_id"`
+}
+
+// Workspace 工作区信息
+// 对应 /workspaces 接口返回的单个 workspace
+// 例如 map[created_at:1.753153422e+09 current:true id:8b72a5d2-31cb-4ca5-a5e2-b7e4b79064b3 name:admin's Workspace plan:sandbox status:normal]
+type Workspace struct {
+	ID        string   `json:"id"`
+	Name      string   `json:"name"`
+	Plan      string   `json:"plan"`
+	Status    string   `json:"status"`
+	Current   bool     `json:"current"`
+	CreatedAt float64  `json:"created_at"`
+}
+
+// WorkspacesApiResponse 工作区列表响应
+// 对应 map[workspaces:[...]]
+type WorkspacesApiResponse struct {
+	Workspaces []Workspace `json:"workspaces"`
+}
+
+// WorkspaceMember 工作区成员信息
+// 对应 /workspaces/current/members 接口返回的 accounts 字段
+// 例如 map[avatar:<nil> avatar_url:<nil> created_at:1.753153422e+09 email:admin@chaitin.net id:53846eb7-1ac0-461d-8684-d22e56ee477c last_active_at:1.753347058e+09 last_login_at:1.753153422e+09 name:admin role:owner status:active]
+type WorkspaceMember struct {
+	ID           string   `json:"id"`
+	Name         string   `json:"name"`
+	Email        string   `json:"email"`
+	Role         string   `json:"role"`
+	Status       string   `json:"status"`
+	Avatar       *string  `json:"avatar"`
+	AvatarURL    *string  `json:"avatar_url"`
+	CreatedAt    float64  `json:"created_at"`
+	LastActiveAt float64  `json:"last_active_at"`
+	LastLoginAt  float64  `json:"last_login_at"`
+}
+
+// WorkspacesCurrentMembersApiResponse 工作区当前成员接口响应
+// 对应 map[accounts:[...]]
+type WorkspacesCurrentMembersApiResponse struct {
+	Accounts []WorkspaceMember `json:"accounts"`
+}
+
+// WorkspaceInviteEmailApiResponse 工作区成员邀请邮件接口响应
+// 对应 /workspaces/current/members/invite-email
+// 返回示例: {"result": "success", "invitation_results": [...], "tenant_id": "..."}
+type WorkspaceInviteEmailApiResponse struct {
+	Result            string                        `json:"result"`
+	InvitationResults []WorkspaceInvitationResult    `json:"invitation_results"`
+	TenantID          string                        `json:"tenant_id"`
+}
+
+type WorkspaceInvitationResult struct {
+	Status  string  `json:"status"`
+	Email   string  `json:"email"`
+	URL     string  `json:"url,omitempty"`
+	Message string  `json:"message,omitempty"`
+}
+
+// WorkspaceOperationResponse 工作区成员操作通用响应
+// 用于 /workspaces/current/members/<uuid:member_id> 删除成员等
+// 返回示例: {"result": "success", "tenant_id": "..."}
+type WorkspaceOperationResponse struct {
+	Result   string `json:"result"`
+	TenantID string `json:"tenant_id"`
+}
+
+// WorkspaceUpdateRoleResponse 工作区成员角色更新响应
+// 用于 /workspaces/current/members/<uuid:member_id>/update-role
+// 返回示例: {"result": "success"}
+type WorkspaceUpdateRoleResponse struct {
+	Result string `json:"result"`
+}
+
+// WorkspacesCurrentDatasetOperatorsApiResponse 工作区数据集操作员成员列表响应
+// 对应 /workspaces/current/dataset-operators
+// 返回示例: {"result": "success", "accounts": [...]}
+type WorkspacesCurrentDatasetOperatorsApiResponse struct {
+	Result   string            `json:"result"`
+	Accounts []WorkspaceMember `json:"accounts"`
+}
