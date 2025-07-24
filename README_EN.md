@@ -1,5 +1,15 @@
 # Dify Golang SDK
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/kingfs/godify)](https://goreportcard.com/report/github.com/kingfs/godify)
+[![Test Coverage](https://img.shields.io/badge/test%20coverage-25%25-red)](https://github.com/kingfs/godify)
+[![Go Version](https://img.shields.io/badge/go-1.21+-blue.svg)](https://golang.org)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![en](https://img.shields.io/badge/lang-en-blue.svg)](README.md)
+[![zh-CN](https://img.shields.io/badge/lang-zh--CN-red.svg)](README.zh-CN.md)
+
+[简体中文](README.md)  | [English](README_EN.md)
+
+
 Dify Golang SDK is a complete Go language client library for the Dify AI platform, providing a simple and easy-to-use API for interacting with the Dify platform.
 
 ## 🌟 Features
