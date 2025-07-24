@@ -32,6 +32,7 @@ func (c *Client) GetVersion(ctx context.Context, currentVersion string) (*models
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/version",
+		Query:  map[string]string{"current_version": currentVersion},
 	}
 
 	var result models.Version
@@ -77,14 +78,14 @@ func (c *Client) Setup(ctx context.Context, setup *models.SetupRequest) (*models
 }
 
 // Init 初始化Dify
-func (c *Client) Init(ctx context.Context, password string) (*models.ResultResponse, error) {
+func (c *Client) Init(ctx context.Context, initPassword string) (*models.ResultResponse, error) {
 	req := &client.Request{
 		Method: "POST",
 		Path:   "/init",
 	}
 
-	if password != "" {
-		req.Body = map[string]string{"password": password}
+	if initPassword != "" {
+		req.Body = map[string]string{"password": initPassword}
 	}
 
 	var result models.ResultResponse
