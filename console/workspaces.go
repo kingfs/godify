@@ -106,3 +106,58 @@ func (c *Client) GetWorkspacesCurrentDatasetOperators(ctx context.Context) (*mod
 	return &resp, err
 }
 
+// model_providers相关接口
+func (c *Client) GetModelProviderList(ctx context.Context, model_type string) (*models.ModelProvidersResponse, error) {
+	switch models.ModelType(model_type) {
+	case models.LLM, models.TEXT_EMBEDDING, models.RERANK, models.SPEECH2TEXT, models.MODERATION, models.TTS:
+		// 合法，继续执行
+	default:
+		return nil, errors.New("参数错误：model_type 不合法")
+	}
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/workspaces/current/model-providers",
+		Query: map[string]string{
+			"model_type": model_type,
+		},
+	}
+	var resp models.ModelProvidersResponse
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
+// 获取指定 provider 下的所有模型
+func (c *Client) GetModelProviderModels(ctx context.Context, provider string) (*models.ModelProviderModelsResponse, error) {
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/workspaces/current/model-providers/" + provider + "/models",
+	}
+	var resp models.ModelProviderModelsResponse
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
+// 新增/更新 provider 下的模型
+func (c *Client) UpdateModelProviderModel(ctx context.Context, provider, model, modelType string, credentials, loadBalancing map[string]interface{}, configFrom *string) (map[string]interface{}, error) {
+	reqBody := map[string]interface{}{
+		"model":      model,
+		"model_type": modelType,
+	}
+	if credentials != nil {
+		reqBody["credentials"] = credentials
+	}
+	if loadBalancing != nil {
+		reqBody["load_balancing"] = loadBalancing
+	}
+	if configFrom != nil {
+		reqBody["config_from"] = configFrom
+	}
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/workspaces/current/model-providers/" + provider + "/models",
+		Body:   reqBody,
+	}
+	var resp map[string]interface{}
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return resp, err
+}
