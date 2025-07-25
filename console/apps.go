@@ -16,7 +16,7 @@ import (
 // api.add_resource(MessageApi, "/apps/<uuid:app_id>/messages/<uuid:message_id>", endpoint="console_message")
 // api.add_resource(ChatMessageListApi, "/apps/<uuid:app_id>/chat-messages", endpoint="console_chat_messages")
 
-func (c *Client) AppsChatMessageListApi(ctx context.Context, appID string, conversationID string, firstID, limit *int) (*models.AppsChatMessageListApiResponse, error) {
+func (c *Client) GetAppsChatMessageList(ctx context.Context, appID string, conversationID string, firstID, limit *int) (*models.AppsChatMessageListApiResponse, error) {
 	reqQuery := map[string]string{"conversation_id": conversationID}
 	if firstID != nil {
 		reqQuery["first_id"] = strconv.Itoa(*firstID)
@@ -34,7 +34,7 @@ func (c *Client) AppsChatMessageListApi(ctx context.Context, appID string, conve
 	return &resp, err
 }
 
-func (c *Client) AppsMessageApi(ctx context.Context, appID string, messageID string) (*models.AppsMessageApiResponse, error) {
+func (c *Client) GetAppsMessage(ctx context.Context, appID string, messageID string) (*models.AppsMessageApiResponse, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/apps/" + appID + "/messages/" + messageID,

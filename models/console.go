@@ -294,29 +294,29 @@ type AppsChatMessageListApiResponse struct {
 }
 
 type AppsChatMessage struct {
-	AgentThoughts         []interface{}        `json:"agent_thoughts"`
-	Annotation            interface{}          `json:"annotation"`
-	AnnotationHitHistory  interface{}          `json:"annotation_hit_history"`
-	Answer                string               `json:"answer"`
-	AnswerTokens          int                  `json:"answer_tokens"`
-	ConversationID        string               `json:"conversation_id"`
-	CreatedAt             float64              `json:"created_at"`
-	Error                 interface{}          `json:"error"`
-	Feedbacks             []interface{}        `json:"feedbacks"`
-	FromAccountID         string               `json:"from_account_id"`
-	FromEndUserID         interface{}          `json:"from_end_user_id"`
-	FromSource            string               `json:"from_source"`
-	ID                    string               `json:"id"`
-	Inputs                map[string]interface{} `json:"inputs"`
-	Message               []AppsMessage        `json:"message"`
-	MessageFiles          []interface{}        `json:"message_files"`
-	MessageTokens         int                  `json:"message_tokens"`
-	Metadata              map[string]interface{} `json:"metadata"`
-	ParentMessageID       interface{}          `json:"parent_message_id"`
-	ProviderResponseLatency float64            `json:"provider_response_latency"`
-	Query                 string               `json:"query"`
-	Status                string               `json:"status"`
-	WorkflowRunID         interface{}          `json:"workflow_run_id"`
+	AgentThoughts           []interface{}          `json:"agent_thoughts"`
+	Annotation              interface{}            `json:"annotation"`
+	AnnotationHitHistory    interface{}            `json:"annotation_hit_history"`
+	Answer                  string                 `json:"answer"`
+	AnswerTokens            int                    `json:"answer_tokens"`
+	ConversationID          string                 `json:"conversation_id"`
+	CreatedAt               float64                `json:"created_at"`
+	Error                   interface{}            `json:"error"`
+	Feedbacks               []interface{}          `json:"feedbacks"`
+	FromAccountID           string                 `json:"from_account_id"`
+	FromEndUserID           interface{}            `json:"from_end_user_id"`
+	FromSource              string                 `json:"from_source"`
+	ID                      string                 `json:"id"`
+	Inputs                  map[string]interface{} `json:"inputs"`
+	Message                 []AppsMessage          `json:"message"`
+	MessageFiles            []interface{}          `json:"message_files"`
+	MessageTokens           int                    `json:"message_tokens"`
+	Metadata                map[string]interface{} `json:"metadata"`
+	ParentMessageID         interface{}            `json:"parent_message_id"`
+	ProviderResponseLatency float64                `json:"provider_response_latency"`
+	Query                   string                 `json:"query"`
+	Status                  string                 `json:"status"`
+	WorkflowRunID           interface{}            `json:"workflow_run_id"`
 }
 
 type AppsMessage struct {
@@ -330,41 +330,41 @@ type AppsMessage struct {
 // 参考返回示例结构体
 
 type AppsMessageApiResponse struct {
-	AgentThoughts        []interface{}          `json:"agent_thoughts"`
-	Annotation           interface{}            `json:"annotation"`
-	AnnotationHitHistory interface{}            `json:"annotation_hit_history"`
-	Answer               string                 `json:"answer"`
-	AnswerTokens         int                    `json:"answer_tokens"`
-	ConversationID       string                 `json:"conversation_id"`
-	CreatedAt            float64                `json:"created_at"`
-	Error                interface{}            `json:"error"`
-	Feedbacks            []interface{}          `json:"feedbacks"`
-	FromAccountID        string                 `json:"from_account_id"`
-	FromEndUserID        interface{}            `json:"from_end_user_id"`
-	FromSource           string                 `json:"from_source"`
-	ID                   string                 `json:"id"`
-	Inputs               map[string]interface{} `json:"inputs"`
-	Message              []AppsMessage          `json:"message"`
-	MessageFiles         []interface{}          `json:"message_files"`
-	MessageTokens        int                    `json:"message_tokens"`
-	Metadata             map[string]interface{} `json:"metadata"`
-	ParentMessageID      interface{}            `json:"parent_message_id"`
-	ProviderResponseLatency float64             `json:"provider_response_latency"`
-	Query                string                 `json:"query"`
-	Status               string                 `json:"status"`
-	WorkflowRunID        interface{}            `json:"workflow_run_id"`
+	AgentThoughts           []interface{}          `json:"agent_thoughts"`
+	Annotation              interface{}            `json:"annotation"`
+	AnnotationHitHistory    interface{}            `json:"annotation_hit_history"`
+	Answer                  string                 `json:"answer"`
+	AnswerTokens            int                    `json:"answer_tokens"`
+	ConversationID          string                 `json:"conversation_id"`
+	CreatedAt               float64                `json:"created_at"`
+	Error                   interface{}            `json:"error"`
+	Feedbacks               []interface{}          `json:"feedbacks"`
+	FromAccountID           string                 `json:"from_account_id"`
+	FromEndUserID           interface{}            `json:"from_end_user_id"`
+	FromSource              string                 `json:"from_source"`
+	ID                      string                 `json:"id"`
+	Inputs                  map[string]interface{} `json:"inputs"`
+	Message                 []AppsMessage          `json:"message"`
+	MessageFiles            []interface{}          `json:"message_files"`
+	MessageTokens           int                    `json:"message_tokens"`
+	Metadata                map[string]interface{} `json:"metadata"`
+	ParentMessageID         interface{}            `json:"parent_message_id"`
+	ProviderResponseLatency float64                `json:"provider_response_latency"`
+	Query                   string                 `json:"query"`
+	Status                  string                 `json:"status"`
+	WorkflowRunID           interface{}            `json:"workflow_run_id"`
 }
 
 // Workspace 工作区信息
 // 对应 /workspaces 接口返回的单个 workspace
 // 例如 map[created_at:1.753153422e+09 current:true id:8b72a5d2-31cb-4ca5-a5e2-b7e4b79064b3 name:admin's Workspace plan:sandbox status:normal]
 type Workspace struct {
-	ID        string   `json:"id"`
-	Name      string   `json:"name"`
-	Plan      string   `json:"plan"`
-	Status    string   `json:"status"`
-	Current   bool     `json:"current"`
-	CreatedAt float64  `json:"created_at"`
+	ID        string  `json:"id"`
+	Name      string  `json:"name"`
+	Plan      string  `json:"plan"`
+	Status    string  `json:"status"`
+	Current   bool    `json:"current"`
+	CreatedAt float64 `json:"created_at"`
 }
 
 // WorkspacesApiResponse 工作区列表响应
@@ -377,16 +377,16 @@ type WorkspacesApiResponse struct {
 // 对应 /workspaces/current/members 接口返回的 accounts 字段
 // 例如 map[avatar:<nil> avatar_url:<nil> created_at:1.753153422e+09 email:admin@chaitin.net id:53846eb7-1ac0-461d-8684-d22e56ee477c last_active_at:1.753347058e+09 last_login_at:1.753153422e+09 name:admin role:owner status:active]
 type WorkspaceMember struct {
-	ID           string   `json:"id"`
-	Name         string   `json:"name"`
-	Email        string   `json:"email"`
-	Role         string   `json:"role"`
-	Status       string   `json:"status"`
-	Avatar       *string  `json:"avatar"`
-	AvatarURL    *string  `json:"avatar_url"`
-	CreatedAt    float64  `json:"created_at"`
-	LastActiveAt float64  `json:"last_active_at"`
-	LastLoginAt  float64  `json:"last_login_at"`
+	ID           string  `json:"id"`
+	Name         string  `json:"name"`
+	Email        string  `json:"email"`
+	Role         string  `json:"role"`
+	Status       string  `json:"status"`
+	Avatar       *string `json:"avatar"`
+	AvatarURL    *string `json:"avatar_url"`
+	CreatedAt    float64 `json:"created_at"`
+	LastActiveAt float64 `json:"last_active_at"`
+	LastLoginAt  float64 `json:"last_login_at"`
 }
 
 // WorkspacesCurrentMembersApiResponse 工作区当前成员接口响应
@@ -399,16 +399,16 @@ type WorkspacesCurrentMembersApiResponse struct {
 // 对应 /workspaces/current/members/invite-email
 // 返回示例: {"result": "success", "invitation_results": [...], "tenant_id": "..."}
 type WorkspaceInviteEmailApiResponse struct {
-	Result            string                        `json:"result"`
-	InvitationResults []WorkspaceInvitationResult    `json:"invitation_results"`
-	TenantID          string                        `json:"tenant_id"`
+	Result            string                      `json:"result"`
+	InvitationResults []WorkspaceInvitationResult `json:"invitation_results"`
+	TenantID          string                      `json:"tenant_id"`
 }
 
 type WorkspaceInvitationResult struct {
-	Status  string  `json:"status"`
-	Email   string  `json:"email"`
-	URL     string  `json:"url,omitempty"`
-	Message string  `json:"message,omitempty"`
+	Status  string `json:"status"`
+	Email   string `json:"email"`
+	URL     string `json:"url,omitempty"`
+	Message string `json:"message,omitempty"`
 }
 
 // WorkspaceOperationResponse 工作区成员操作通用响应
@@ -432,4 +432,114 @@ type WorkspaceUpdateRoleResponse struct {
 type WorkspacesCurrentDatasetOperatorsApiResponse struct {
 	Result   string            `json:"result"`
 	Accounts []WorkspaceMember `json:"accounts"`
+}
+
+type ModelType string
+
+const (
+	LLM            ModelType = "llm"
+	TEXT_EMBEDDING ModelType = "text-embedding"
+	RERANK         ModelType = "rerank"
+	SPEECH2TEXT    ModelType = "speech2text"
+	MODERATION     ModelType = "moderation"
+	TTS            ModelType = "tts"
+)
+
+type ModelProvidersResponse struct {
+	Data []ModelProvider `json:"data"`
+}
+
+type ModelProvider struct {
+	Background               *string               `json:"background"`
+	ConfigurateMethods       []string              `json:"configurate_methods"`
+	CustomConfiguration      CustomConfiguration   `json:"custom_configuration"`
+	Description              map[string]string     `json:"description"`
+	Help                     *string               `json:"help"`
+	IconLarge                *string               `json:"icon_large"`
+	IconSmall                map[string]string     `json:"icon_small"`
+	Label                    map[string]string     `json:"label"`
+	ModelCredentialSchema    ModelCredentialSchema `json:"model_credential_schema"`
+	Model                    ModelInfo             `json:"model"`
+	PreferredProviderType    string                `json:"preferred_provider_type"`
+	Provider                 string                `json:"provider"`
+	ProviderCredentialSchema interface{}           `json:"provider_credential_schema"`
+	SupportedModelTypes      []string              `json:"supported_model_types"`
+	SystemConfiguration      SystemConfiguration   `json:"system_configuration"`
+	TenantID                 string                `json:"tenant_id"`
+}
+
+type CustomConfiguration struct {
+	Status string `json:"status"`
+}
+
+type SystemConfiguration struct {
+	CurrentQuotaType    *string     `json:"current_quota_type"`
+	Enabled             bool        `json:"enabled"`
+	QuotaConfigurations interface{} `json:"quota_configurations"`
+}
+
+// 这里是 model_credential_schema 字段的结构体
+type ModelCredentialSchema struct {
+	CredentialFormSchemas []CredentialFormSchema `json:"credential_form_schemas"`
+}
+
+type CredentialFormSchema struct {
+	Default     interface{}        `json:"default"`
+	Label       map[string]string  `json:"label"`
+	MaxLength   int                `json:"max_length"`
+	Options     []CredentialOption `json:"options"`
+	Placeholder map[string]string  `json:"placeholder"`
+	Required    bool               `json:"required"`
+	ShowOn      []ShowOnCondition  `json:"show_on"`
+	Type        string             `json:"type"`
+	Variable    string             `json:"variable"`
+}
+
+type CredentialOption struct {
+	Label  map[string]string `json:"label"`
+	ShowOn []ShowOnCondition `json:"show_on"`
+	Value  string            `json:"value"`
+}
+
+type ShowOnCondition struct {
+	Value    string `json:"value"`
+	Variable string `json:"variable"`
+}
+
+// model 字段
+type ModelInfo struct {
+	Label       map[string]string `json:"label"`
+	Placeholder map[string]string `json:"placeholder"`
+}
+
+type ProviderCredentialsResponse struct{}
+
+// ModelProviderModelsResponse 用于 /workspaces/current/model-providers/<provider>/models 返回
+// 参考 Python 返回示例和实际 JSON 字段
+
+type ModelProviderModelsResponse struct {
+	Data []ModelProviderModel `json:"data"`
+}
+
+type ModelProviderModel struct {
+	Model                string                 `json:"model"`
+	Label                map[string]string      `json:"label"`
+	ModelType            string                 `json:"model_type"`
+	Features             []string               `json:"features"`
+	FetchFrom            string                 `json:"fetch_from"`
+	ModelProperties      map[string]interface{} `json:"model_properties"`
+	Deprecated           bool                   `json:"deprecated"`
+	Status               string                 `json:"status"`
+	LoadBalancingEnabled bool                   `json:"load_balancing_enabled"`
+	Provider             ModelProviderInfo      `json:"provider"`
+}
+
+type ModelProviderInfo struct {
+	Provider            string            `json:"provider"`
+	Label               map[string]string `json:"label"`
+	IconSmall           map[string]string `json:"icon_small"`
+	IconLarge           *string           `json:"icon_large"`
+	SupportedModelTypes []string          `json:"supported_model_types"`
+	Models              []string          `json:"models"`
+	TenantID            string            `json:"tenant_id"`
 }
