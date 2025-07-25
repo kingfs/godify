@@ -4,7 +4,6 @@ go 1.21.0
 
 require (
 	github.com/joho/godotenv v1.5.1
-	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.20.1
 )
 

@@ -16,7 +16,7 @@ import (
 var pluginURLPrefix string = "/workspaces/current/plugin"
 
 // PluginList 获取插件列表
-func (c *Client) PluginList(ctx context.Context, page, pageSize int) (*models.PluginListResponse, error) {
+func (c *Client) GetPluginList(ctx context.Context, page, pageSize int) (*models.PluginListResponse, error) {
 	query := map[string]string{
 		"page":      strconv.Itoa(page),
 		"page_size": strconv.Itoa(pageSize),
@@ -32,7 +32,7 @@ func (c *Client) PluginList(ctx context.Context, page, pageSize int) (*models.Pl
 }
 
 // PluginUploadPkg 上传插件包（pkg文件）
-func (c *Client) PluginUploadPkg(ctx context.Context, filename string, fileData []byte) (string, error) {
+func (c *Client) UploadPluginPkg(ctx context.Context, filename string, fileData []byte) (string, error) {
 	req := &client.Request{
 		Path:   pluginURLPrefix + "/upload/pkg",
 	}
@@ -54,14 +54,14 @@ func (c *Client) PluginUploadPkg(ctx context.Context, filename string, fileData 
 }
 
 // PluginInstallFromPkg 安装插件（本地包）
-func (c *Client) PluginInstallFromPkg(ctx context.Context, pkgPath string) (*models.PluginInstallResponse, error) {
+func (c *Client) InstallPluginFromPkg(ctx context.Context, pkgPath string) (*models.PluginInstallResponse, error) {
 	fileData, err := os.ReadFile(pkgPath)
 	if err != nil {
 		return nil, fmt.Errorf("读取测试插件包失败: %v", err)
 	}
 
 	filename := filepath.Base(pkgPath)
-	uniqueIdentifier, err := c.PluginUploadPkg(ctx, filename, fileData)
+	uniqueIdentifier, err := c.UploadPluginPkg(ctx, filename, fileData)
 	if err != nil {
 		return nil, fmt.Errorf("上传插件包失败: %v", err)
 	}
@@ -79,7 +79,7 @@ func (c *Client) PluginInstallFromPkg(ctx context.Context, pkgPath string) (*mod
 }
 
 // PluginUninstall 卸载插件
-func (c *Client) PluginUninstall(ctx context.Context, pluginInstallationID string) (*any, error) {
+func (c *Client) UninstallPlugin(ctx context.Context, pluginInstallationID string) (*any, error) {
 	req := &client.Request{
 		Method: "POST",
 		Path:   "/uninstall",
@@ -91,7 +91,7 @@ func (c *Client) PluginUninstall(ctx context.Context, pluginInstallationID strin
 }
 
 // PluginGetPermission 获取插件权限
-func (c *Client) PluginGetPermission(ctx context.Context) (*any, error) {
+func (c *Client) GetPluginPermission(ctx context.Context) (*any, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/permission/fetch",
@@ -102,7 +102,7 @@ func (c *Client) PluginGetPermission(ctx context.Context) (*any, error) {
 }
 
 // PluginChangePermission 修改插件权限
-func (c *Client) PluginChangePermission(ctx context.Context, installPermission, debugPermission string) (*any, error) {
+func (c *Client) UpdatePluginPermission(ctx context.Context, installPermission, debugPermission string) (*any, error) {
 	body := map[string]any{
 		"install_permission": installPermission,
 		"debug_permission":  debugPermission,
@@ -118,7 +118,7 @@ func (c *Client) PluginChangePermission(ctx context.Context, installPermission, 
 }
 
 // PluginGetManifest 获取插件manifest
-func (c *Client) PluginGetManifest(ctx context.Context, pluginUniqueIdentifier string) (*any, error) {
+func (c *Client) GetPluginManifest(ctx context.Context, pluginUniqueIdentifier string) (*any, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/fetch-manifest",
@@ -131,7 +131,7 @@ func (c *Client) PluginGetManifest(ctx context.Context, pluginUniqueIdentifier s
 
 // PluginGetIcon 获取插件图标
 // 返回二进制数据和mimetype
-func (c *Client) PluginGetIcon(ctx context.Context, tenantID, filename string) ([]byte, string, error) {
+func (c *Client) GetPluginIcon(ctx context.Context, tenantID, filename string) ([]byte, string, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/icon",
@@ -149,7 +149,7 @@ func (c *Client) PluginGetIcon(ctx context.Context, tenantID, filename string) (
 }
 
 // PluginListLatestVersions 获取插件最新版本信息
-func (c *Client) PluginListLatestVersions(ctx context.Context, pluginIDs []string) (*any, error) {
+func (c *Client) GetPluginListLatestVersions(ctx context.Context, pluginIDs []string) (*any, error) {
 	body := map[string]any{"plugin_ids": pluginIDs}
 	req := &client.Request{
 		Method: "POST",
@@ -162,7 +162,7 @@ func (c *Client) PluginListLatestVersions(ctx context.Context, pluginIDs []strin
 }
 
 // PluginListInstallationsFromIds 批量获取插件安装信息
-func (c *Client) PluginListInstallationsFromIds(ctx context.Context, pluginIDs []string) (*any, error) {
+func (c *Client) GetPluginListInstallationsFromIds(ctx context.Context, pluginIDs []string) (*any, error) {
 	body := map[string]any{"plugin_ids": pluginIDs}
 	req := &client.Request{
 		Method: "POST",
@@ -175,7 +175,7 @@ func (c *Client) PluginListInstallationsFromIds(ctx context.Context, pluginIDs [
 }
 
 // PluginUploadFromGithub 从 Github 上传插件
-func (c *Client) PluginUploadFromGithub(ctx context.Context, repo, version, pkg string) (*any, error) {
+func (c *Client) UploadPluginFromGithub(ctx context.Context, repo, version, pkg string) (*any, error) {
 	body := map[string]any{
 		"repo":    repo,
 		"version": version,
@@ -192,7 +192,7 @@ func (c *Client) PluginUploadFromGithub(ctx context.Context, repo, version, pkg 
 }
 
 // PluginUploadFromBundle 上传插件 bundle
-func (c *Client) PluginUploadFromBundle(ctx context.Context, fileName string, fileData []byte) (*any, error) {
+func (c *Client) UploadPluginFromBundle(ctx context.Context, fileName string, fileData []byte) (*any, error) {
 	resp, err := c.baseClient.UploadFile(ctx, "/upload/bundle", "bundle", fileName, fileData, nil)
 	if err != nil {
 		return nil, err
@@ -203,7 +203,7 @@ func (c *Client) PluginUploadFromBundle(ctx context.Context, fileName string, fi
 }
 
 // PluginInstallFromGithub 从 Github 安装插件
-func (c *Client) PluginInstallFromGithub(ctx context.Context, pluginUniqueIdentifier, repo, version, pkg string) (*any, error) {
+func (c *Client) InstallPluginFromGithub(ctx context.Context, pluginUniqueIdentifier, repo, version, pkg string) (*any, error) {
 	body := map[string]any{
 		"plugin_unique_identifier": pluginUniqueIdentifier,
 		"repo":    repo,
@@ -221,7 +221,7 @@ func (c *Client) PluginInstallFromGithub(ctx context.Context, pluginUniqueIdenti
 }
 
 // PluginInstallFromMarketplace 从市场安装插件
-func (c *Client) PluginInstallFromMarketplace(ctx context.Context, pluginUniqueIdentifiers []string) (*any, error) {
+func (c *Client) InstallPluginFromMarketplace(ctx context.Context, pluginUniqueIdentifiers []string) (*any, error) {
 	body := map[string]any{"plugin_unique_identifiers": pluginUniqueIdentifiers}
 	req := &client.Request{
 		Method: "POST",
@@ -234,7 +234,7 @@ func (c *Client) PluginInstallFromMarketplace(ctx context.Context, pluginUniqueI
 }
 
 // PluginFetchMarketplacePkg 获取市场插件包信息
-func (c *Client) PluginFetchMarketplacePkg(ctx context.Context, pluginUniqueIdentifier string) (*any, error) {
+func (c *Client) GetMarketplacePkg(ctx context.Context, pluginUniqueIdentifier string) (*any, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/marketplace/pkg",
@@ -247,7 +247,7 @@ func (c *Client) PluginFetchMarketplacePkg(ctx context.Context, pluginUniqueIden
 
 // PluginFetchInstallTasks 获取插件安装任务列表
 // PluginFetchInstallTasks 获取插件安装任务列表
-func (c *Client) PluginFetchInstallTasks(ctx context.Context, page, pageSize int) (*any, error) {
+func (c *Client) GetPluginFetchInstallTasks(ctx context.Context, page, pageSize int) (*any, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/tasks",
@@ -259,7 +259,7 @@ func (c *Client) PluginFetchInstallTasks(ctx context.Context, page, pageSize int
 }
 
 // PluginFetchInstallTask 获取单个插件安装任务
-func (c *Client) PluginFetchInstallTask(ctx context.Context, taskID string) (*any, error) {
+func (c *Client) GetPluginFetchInstallTask(ctx context.Context, taskID string) (*any, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/tasks/" + taskID,
@@ -270,7 +270,7 @@ func (c *Client) PluginFetchInstallTask(ctx context.Context, taskID string) (*an
 }
 
 // PluginDeleteInstallTask 删除插件安装任务
-func (c *Client) PluginDeleteInstallTask(ctx context.Context, taskID string) (*any, error) {
+func (c *Client) DeletePluginInstallTask(ctx context.Context, taskID string) (*any, error) {
 	req := &client.Request{
 		Method: "POST",
 		Path:   "/tasks/" + taskID + "/delete",
@@ -281,7 +281,7 @@ func (c *Client) PluginDeleteInstallTask(ctx context.Context, taskID string) (*a
 }
 
 // PluginDeleteAllInstallTaskItems 删除所有插件安装任务项
-func (c *Client) PluginDeleteAllInstallTaskItems(ctx context.Context) (*any, error) {
+func (c *Client) DeleteAllPluginInstallTaskItems(ctx context.Context) (*any, error) {
 	req := &client.Request{
 		Method: "POST",
 		Path:   "/tasks/delete_all",
@@ -292,7 +292,7 @@ func (c *Client) PluginDeleteAllInstallTaskItems(ctx context.Context) (*any, err
 }
 
 // PluginDeleteInstallTaskItem 删除指定插件安装任务项
-func (c *Client) PluginDeleteInstallTaskItem(ctx context.Context, taskID, identifier string) (*any, error) {
+func (c *Client) DeletePluginInstallTaskItem(ctx context.Context, taskID, identifier string) (*any, error) {
 	path := "/tasks/" + taskID + "/delete/" + identifier
 	req := &client.Request{
 		Method: "POST",
@@ -304,7 +304,7 @@ func (c *Client) PluginDeleteInstallTaskItem(ctx context.Context, taskID, identi
 }
 
 // PluginUpgradeFromMarketplace 从市场升级插件
-func (c *Client) PluginUpgradeFromMarketplace(ctx context.Context, originalPluginUniqueIdentifier, newPluginUniqueIdentifier string) (*any, error) {
+func (c *Client) UpgradePluginFromMarketplace(ctx context.Context, originalPluginUniqueIdentifier, newPluginUniqueIdentifier string) (*any, error) {
 	body := map[string]any{
 		"original_plugin_unique_identifier": originalPluginUniqueIdentifier,
 		"new_plugin_unique_identifier":      newPluginUniqueIdentifier,
@@ -320,7 +320,7 @@ func (c *Client) PluginUpgradeFromMarketplace(ctx context.Context, originalPlugi
 }
 
 // PluginUpgradeFromGithub 从 Github 升级插件
-func (c *Client) PluginUpgradeFromGithub(ctx context.Context, originalPluginUniqueIdentifier, newPluginUniqueIdentifier, repo, version, pkg string) (*any, error) {
+func (c *Client) UpgradePluginFromGithub(ctx context.Context, originalPluginUniqueIdentifier, newPluginUniqueIdentifier, repo, version, pkg string) (*any, error) {
 	body := map[string]any{
 		"original_plugin_unique_identifier": originalPluginUniqueIdentifier,
 		"new_plugin_unique_identifier":      newPluginUniqueIdentifier,
@@ -339,7 +339,7 @@ func (c *Client) PluginUpgradeFromGithub(ctx context.Context, originalPluginUniq
 }
 
 // PluginDebuggingKey 获取插件调试 key
-func (c *Client) PluginDebuggingKey(ctx context.Context) (*any, error) {
+func (c *Client) GetPluginDebuggingKey(ctx context.Context) (*any, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/debugging-key",
@@ -350,7 +350,7 @@ func (c *Client) PluginDebuggingKey(ctx context.Context) (*any, error) {
 }
 
 // PluginFetchDynamicSelectOptions 获取插件动态参数选项
-func (c *Client) PluginFetchDynamicSelectOptions(ctx context.Context, pluginID, provider, action, parameter, providerType string) (*any, error) {
+func (c *Client) GetPluginFetchDynamicSelectOptions(ctx context.Context, pluginID, provider, action, parameter, providerType string) (*any, error) {
 	query := map[string]string{
 		"plugin_id":     pluginID,
 		"provider":      provider,

@@ -3,12 +3,13 @@ package console
 // test pr
 import (
 	"context"
+	"errors"
 
 	"github.com/kingfs/godify/client"
 	"github.com/kingfs/godify/models"
 )
 
-func (c *Client) WorkspacesApi(ctx context.Context) (*models.WorkspacesApiResponse, error) {
+func (c *Client) GetWorkspaces(ctx context.Context) (*models.WorkspacesApiResponse, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/workspaces",
@@ -18,7 +19,7 @@ func (c *Client) WorkspacesApi(ctx context.Context) (*models.WorkspacesApiRespon
 	return &resp, err
 }
 
-func (c *Client) WorkspacesCurrentApi(ctx context.Context) (*models.Workspace, error) {
+func (c *Client) GetWorkspacesCurrent(ctx context.Context) (*models.Workspace, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/workspaces/current",
@@ -28,7 +29,7 @@ func (c *Client) WorkspacesCurrentApi(ctx context.Context) (*models.Workspace, e
 	return &resp, err
 }
 
-func (c *Client) WorkspacesCurrentMembersApi(ctx context.Context) (*models.WorkspacesCurrentMembersApiResponse, error) {
+func (c *Client) GetWorkspacesCurrentMembers(ctx context.Context) (*models.WorkspacesCurrentMembersApiResponse, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/workspaces/current/members",
@@ -39,7 +40,20 @@ func (c *Client) WorkspacesCurrentMembersApi(ctx context.Context) (*models.Works
 }
 
 // 邀请成员邮件接口
-func (c *Client) WorkspacesCurrentMembersInviteEmailApi(ctx context.Context, emails []string, role, language string) (*models.WorkspaceInviteEmailApiResponse, error) {
+func (c *Client) CreateWorkspacesCurrentMembersInviteEmail(ctx context.Context, emails []string, role, language string) (*models.WorkspaceInviteEmailApiResponse, error) {
+	role_types := []string{"normal", "editor", "admin"}
+	// 如果role不在role_types里，报错
+	valid := false
+	for _, r := range role_types {
+		if role == r {
+			valid = true
+			break
+		}
+	}
+	if !valid {
+		err := errors.New("参数错误：role 必须为 normal、editor 或 admin")
+		return nil, err
+	}
 	req := &client.Request{
 		Method: "POST",
 		Path:   "/workspaces/current/members/invite-email",
@@ -55,7 +69,7 @@ func (c *Client) WorkspacesCurrentMembersInviteEmailApi(ctx context.Context, ema
 }
 
 // 取消成员邀请/移除成员接口
-func (c *Client) WorkspacesCurrentMembersDeleteApi(ctx context.Context, memberID string) (*models.WorkspaceOperationResponse, error) {
+func (c *Client) DeleteWorkspacesCurrentMembers(ctx context.Context, memberID string) (*models.WorkspaceOperationResponse, error) {
 	path := "/workspaces/current/members/" + memberID
 	req := &client.Request{
 		Method: "DELETE",
@@ -67,7 +81,7 @@ func (c *Client) WorkspacesCurrentMembersDeleteApi(ctx context.Context, memberID
 }
 
 // 更新成员角色接口
-func (c *Client) WorkspacesCurrentMembersUpdateRoleApi(ctx context.Context, memberID, role string) (*models.WorkspaceUpdateRoleResponse, error) {
+func (c *Client) UpdateWorkspacesCurrentMembersRole(ctx context.Context, memberID, role string) (*models.WorkspaceUpdateRoleResponse, error) {
 	path := "/workspaces/current/members/" + memberID + "/update-role"
 	req := &client.Request{
 		Method: "PUT",
@@ -82,7 +96,7 @@ func (c *Client) WorkspacesCurrentMembersUpdateRoleApi(ctx context.Context, memb
 }
 
 // 获取数据集操作员成员列表接口
-func (c *Client) WorkspacesCurrentDatasetOperatorsApi(ctx context.Context) (*models.WorkspacesCurrentDatasetOperatorsApiResponse, error) {
+func (c *Client) GetWorkspacesCurrentDatasetOperators(ctx context.Context) (*models.WorkspacesCurrentDatasetOperatorsApiResponse, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/workspaces/current/dataset-operators",
