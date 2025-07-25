@@ -98,7 +98,7 @@ jobs:
       run: go test -bench=. ./benchmark/
 
     - name: Upload benchmark results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: benchmark-results
         path: benchmark-results.txt
@@ -124,7 +124,7 @@ jobs:
       run: make build
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-${{ matrix.os }}
         path: |
