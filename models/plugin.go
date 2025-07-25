@@ -14,7 +14,6 @@ type PluginListResponse struct {
 }
 
 // PluginItem 需根据实际插件字段定义，暂用 map 占位
-// TODO: 根据实际字段细化
 type PluginItem struct {
 	ID            string `json:"id"`
 	Name          string `json:"name"`
@@ -32,7 +31,7 @@ type PluginListLatestVersionsResponse struct {
 }
 
 // PluginVersionItem 需根据实际字段定义，暂用 map 占位
-// TODO: 根据实际字段细化
+
 type PluginVersionItem map[string]any
 
 // PluginListInstallationsFromIdsResponse 用于接收根据ID获取插件安装信息接口返回值
