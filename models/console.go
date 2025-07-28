@@ -73,6 +73,7 @@ type UpdateAppRequest struct {
 	Icon                string `json:"icon,omitempty"`
 	IconBackground      string `json:"icon_background,omitempty"`
 	UseIconAsAnswerIcon bool   `json:"use_icon_as_answer_icon,omitempty"`
+	MaxActiveRequests   int    `json:"max_active_requests,omitempty"`
 }
 
 // CopyAppRequest 复制应用请求
@@ -687,4 +688,16 @@ type ApiTool struct {
 	Name         string            `json:"name"`
 	OutputSchema interface{}       `json:"output_schema"`
 	Parameters   []ToolParameter   `json:"parameters"`
+}
+
+// AppImportResponse 应用导入响应
+type AppImportResponse struct {
+	Status             string                 `json:"status"`
+	AppID              string                 `json:"app_id,omitempty"`
+	AppMode            string                 `json:"app_mode,omitempty"`
+	CurrentDSLVersion  string                 `json:"current_dsl_version,omitempty"`
+	Error              string                 `json:"error,omitempty"`
+	ID                 string                 `json:"id,omitempty"`
+	ImportedDSLVersion string                 `json:"imported_dsl_version,omitempty"`
+	Data               map[string]interface{} `json:"data,omitempty"`
 }

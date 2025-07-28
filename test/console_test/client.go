@@ -1,4 +1,4 @@
-package test
+package console_test
 
 import (
 	"os"
@@ -14,7 +14,7 @@ func TestNewClientWithBaseURL(baseURL string, use_real_url bool) *console.Client
 	// 是否使用真实测试url
 	if use_real_url {
 		baseURL = "http://localhost"
-		_ = godotenv.Load("../.env")
+		_ = godotenv.Load("../../.env")
 		auth = os.Getenv("authorization")
 		workspaceID = os.Getenv("workspace_id")
 	} else {

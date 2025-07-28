@@ -9,6 +9,18 @@ import (
 	"github.com/kingfs/godify/models"
 )
 
+// GetCurrentTenant 获取当前租户
+func (c *Client) GetCurrentTenant(ctx context.Context) (*models.Tenant, error) {
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/workspaces/current",
+	}
+
+	var result models.Tenant
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
+}
+
 func (c *Client) GetWorkspaces(ctx context.Context) (*models.WorkspacesApiResponse, error) {
 	req := &client.Request{
 		Method: "GET",
