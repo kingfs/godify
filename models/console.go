@@ -543,3 +543,148 @@ type ModelProviderInfo struct {
 	Models              []string          `json:"models"`
 	TenantID            string            `json:"tenant_id"`
 }
+
+// ToolProviderListDetailResponse 工具提供者列表详细响应
+type (
+	ToolProviderListDetailResponse []ToolProviderDetail
+	ToolProviderListResponse       struct {
+		Data []ToolProvider `json:"data"`
+	}
+)
+
+type ToolProvider struct {
+	Provider  string            `json:"provider"`
+	Label     map[string]string `json:"label"`
+	IconSmall map[string]string `json:"icon_small"`
+	IconLarge *string           `json:"icon_large"`
+}
+
+// ToolProviderDetail 工具提供者详细信息
+type ToolProviderDetail struct {
+	AllowDelete            bool                   `json:"allow_delete"`
+	Author                 string                 `json:"author"`
+	Description            map[string]string      `json:"description"`
+	Icon                   string                 `json:"icon"`
+	IconDark               *string                `json:"icon_dark"`
+	ID                     string                 `json:"id"`
+	IsTeamAuthorization    bool                   `json:"is_team_authorization"`
+	Label                  map[string]string      `json:"label"`
+	Labels                 []string               `json:"labels"`
+	Name                   string                 `json:"name"`
+	PluginID               *string                `json:"plugin_id"`
+	PluginUniqueIdentifier string                 `json:"plugin_unique_identifier"`
+	TeamCredentials        map[string]interface{} `json:"team_credentials"`
+	Tools                  []interface{}          `json:"tools"`
+	Type                   string                 `json:"type"`
+}
+
+// BuiltinToolListResponse 内置工具列表响应
+type BuiltinToolListResponse []BuiltinTool
+
+// BuiltinTool 内置工具信息
+type BuiltinTool struct {
+	Author       string            `json:"author"`
+	Description  map[string]string `json:"description"`
+	Label        map[string]string `json:"label"`
+	Labels       []string          `json:"labels"`
+	Name         string            `json:"name"`
+	OutputSchema interface{}       `json:"output_schema"`
+	Parameters   []ToolParameter   `json:"parameters"`
+}
+
+// ToolParameter 工具参数定义
+type ToolParameter struct {
+	AutoGenerate     *bool             `json:"auto_generate"`
+	Default          interface{}       `json:"default"`
+	Form             string            `json:"form"`
+	HumanDescription map[string]string `json:"human_description"`
+	InputSchema      interface{}       `json:"input_schema"`
+	Label            map[string]string `json:"label"`
+	LLMDescription   string            `json:"llm_description"`
+	Max              interface{}       `json:"max"`
+	Min              interface{}       `json:"min"`
+	Name             string            `json:"name"`
+	Options          []interface{}     `json:"options"`
+	Placeholder      interface{}       `json:"placeholder"`
+	Precision        interface{}       `json:"precision"`
+	Required         bool              `json:"required"`
+	Scope            interface{}       `json:"scope"`
+	Template         interface{}       `json:"template"`
+	Type             string            `json:"type"`
+}
+
+// ToolProviderApiEntity 工具提供商 API 实体
+// 用于 /workspaces/current/tool-provider/builtin/{provider}/info 返回
+type ToolProviderEntity struct {
+	ID                     string                 `json:"id"`
+	Author                 string                 `json:"author"`
+	Name                   string                 `json:"name"`
+	Description            map[string]string      `json:"description"`
+	Icon                   string                 `json:"icon"`
+	IconDark               *string                `json:"icon_dark"`
+	Label                  map[string]string      `json:"label"`
+	Type                   string                 `json:"type"`
+	MaskedCredentials      map[string]interface{} `json:"masked_credentials"`
+	IsTeamAuthorization    bool                   `json:"is_team_authorization"`
+	PluginID               *string                `json:"plugin_id"`
+	PluginUniqueIdentifier *string                `json:"plugin_unique_identifier"`
+	Tools                  []interface{}          `json:"tools"`
+	Labels                 []string               `json:"labels"`
+	AllowDelete            bool                   `json:"allow_delete"`
+	OriginalCredentials    map[string]interface{} `json:"original_credentials,omitempty"`
+	ServerURL              *string                `json:"server_url,omitempty"`
+	UpdatedAt              *int64                 `json:"updated_at,omitempty"`
+	ServerIdentifier       *string                `json:"server_identifier,omitempty"`
+}
+
+// ToolBuiltinProviderCredentialsSchemaResponse 内置工具提供商凭据模式响应
+// 对应 /workspaces/current/tool-provider/builtin/{provider}/credentials_schema 接口
+type ToolBuiltinProviderCredentialsSchemaResponse []ToolBuiltinProviderCredentialSchema
+
+// ToolBuiltinProviderCredentialSchema 内置工具提供商凭据模式
+type ToolBuiltinProviderCredentialSchema struct {
+	Default      interface{}                 `json:"default"`
+	Label        map[string]string           `json:"label"`
+	MaxLength    *int                        `json:"max_length,omitempty"`
+	Options      []ToolBuiltinProviderOption `json:"options,omitempty"`
+	Placeholder  map[string]string           `json:"placeholder,omitempty"`
+	Required     bool                        `json:"required"`
+	ShowOn       []ToolBuiltinProviderShowOn `json:"show_on,omitempty"`
+	Type         string                      `json:"type"`
+	Variable     string                      `json:"variable"`
+	Help         map[string]string           `json:"help,omitempty"`
+	Min          interface{}                 `json:"min,omitempty"`
+	Max          interface{}                 `json:"max,omitempty"`
+	Precision    interface{}                 `json:"precision,omitempty"`
+	Scope        interface{}                 `json:"scope,omitempty"`
+	Template     interface{}                 `json:"template,omitempty"`
+	Form         string                      `json:"form,omitempty"`
+	AutoGenerate *bool                       `json:"auto_generate,omitempty"`
+}
+
+// ToolBuiltinProviderOption 内置工具提供商选项
+type ToolBuiltinProviderOption struct {
+	Label  map[string]string           `json:"label"`
+	ShowOn []ToolBuiltinProviderShowOn `json:"show_on,omitempty"`
+	Value  string                      `json:"value"`
+}
+
+// ToolBuiltinProviderShowOn 内置工具提供商显示条件
+type ToolBuiltinProviderShowOn struct {
+	Value    string `json:"value"`
+	Variable string `json:"variable"`
+}
+
+// ApiToolListResponse 对应 GetToolApiProviderListTools 返回的工具列表
+type ApiToolListResponse []ApiTool
+
+// ApiTool API工具信息
+type ApiTool struct {
+	Author       string            `json:"author"`
+	Description  map[string]string `json:"description"`
+	Label        map[string]string `json:"label"`
+	Labels       []string          `json:"labels"`
+	Name         string            `json:"name"`
+	OutputSchema interface{}       `json:"output_schema"`
+	Parameters   []ToolParameter   `json:"parameters"`
+}

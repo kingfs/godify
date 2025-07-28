@@ -161,3 +161,191 @@ func (c *Client) UpdateModelProviderModel(ctx context.Context, provider, model, 
 	err := c.baseClient.DoJSON(ctx, req, &resp)
 	return resp, err
 }
+
+func (c *Client) GetToolProviderList(ctx context.Context, toolType string) (*models.ToolProviderListDetailResponse, error) {
+	tool_types := []string{"builtin", "model", "api", "workflow", "mcp"}
+	if toolType != "" {
+		valid := false
+		for _, t := range tool_types {
+			if toolType == t {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			return nil, errors.New("参数错误：tool_type 不合法，应为[builtin, model, api, workflow, mcp]")
+		}
+	}
+
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/workspaces/current/tool-providers",
+		Query: map[string]string{
+			"tool_type": toolType, // 可选参数，不传则返回所有工具提供者
+		},
+	}
+	var resp models.ToolProviderListDetailResponse
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
+func (c *Client) GetToolBuiltinProviderListTools(ctx context.Context, provider string) (*models.BuiltinToolListResponse, error) {
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/workspaces/current/tool-provider/builtin/" + provider + "/tools",
+	}
+	var resp models.BuiltinToolListResponse
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
+// 获取内置工具提供商信息接口
+func (c *Client) GetToolBuiltinProviderInfo(ctx context.Context, provider string) (*models.ToolProviderEntity, error) {
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/workspaces/current/tool-provider/builtin/" + provider + "/info",
+	}
+	var resp models.ToolProviderEntity
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
+// 删除内置工具提供商接口
+func (c *Client) DeleteToolBuiltinProvider(ctx context.Context, provider string) (any, error) {
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/workspaces/current/tool-provider/builtin/" + provider + "/delete",
+	}
+	var resp any
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return resp, err
+}
+
+// 获取内置工具提供商图标接口
+func (c *Client) GetToolBuiltinProviderIcon(ctx context.Context, provider string) (any, error) {
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/workspaces/current/tool-provider/builtin/" + provider + "/icon",
+	}
+	var resp any
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return resp, err
+}
+
+// 更新内置工具提供商credentials接口
+func (c *Client) UpdateToolBuiltinProvider(ctx context.Context, provider string, credentials map[string]string) (*models.OperationResponse, error) {
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/workspaces/current/tool-provider/builtin/" + provider + "/update",
+		Body: map[string]map[string]string{
+			"credentials": credentials,
+		},
+	}
+	var resp models.OperationResponse
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
+// 获取内置工具提供商凭据接口
+func (c *Client) GetToolBuiltinProviderCredentials(ctx context.Context, provider string) (map[string]interface{}, error) {
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/workspaces/current/tool-provider/builtin/" + provider + "/credentials",
+	}
+	var resp map[string]interface{}
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return resp, err
+}
+
+// 获取内置工具提供商凭据模式接口
+func (c *Client) GetToolBuiltinProviderCredentialsSchema(ctx context.Context, provider string) (*models.ToolBuiltinProviderCredentialsSchemaResponse, error) {
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/workspaces/current/tool-provider/builtin/" + provider + "/credentials_schema",
+	}
+	var resp models.ToolBuiltinProviderCredentialsSchemaResponse
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
+// 添加API工具提供商接口
+func (c *Client) AddToolApiProvider(ctx context.Context, provider string, credentials map[string]interface{}, icon map[string]interface{}, schemaType, schema string, labels []string, privacyPolicy *string, customDisclaimer *string) (*models.OperationResponse, error) {
+	reqBody := map[string]interface{}{
+		"provider":    provider,
+		"credentials": credentials,
+		"icon":        icon,
+		"schema_type": schemaType,
+		"schema":      schema,
+		"labels":      labels,
+	}
+	if privacyPolicy != nil {
+		reqBody["privacy_policy"] = *privacyPolicy
+	}
+	if customDisclaimer != nil {
+		reqBody["custom_disclaimer"] = *customDisclaimer
+	}
+
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/workspaces/current/tool-provider/api/add",
+		Body:   reqBody,
+	}
+	var resp models.OperationResponse
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
+// 获取API工具提供商工具列表接口
+func (c *Client) GetToolApiProviderListTools(ctx context.Context, provider string) (*models.ApiToolListResponse, error) {
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/workspaces/current/tool-provider/api/tools",
+		Query: map[string]string{
+			"provider": provider,
+		},
+	}
+	var resp models.ApiToolListResponse
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
+// 更新API工具提供商接口
+func (c *Client) UpdateToolApiProvider(ctx context.Context, credentials map[string]interface{}, schemaType, schema, provider, originalProvider string, icon map[string]interface{}, privacyPolicy, customDisclaimer string, labels []string) (*models.OperationResponse, error) {
+	reqBody := map[string]interface{}{
+		"credentials":       credentials,
+		"schema_type":       schemaType,
+		"schema":            schema,
+		"provider":          provider,
+		"original_provider": originalProvider,
+		"icon":              icon,
+		"privacy_policy":    privacyPolicy,
+		"custom_disclaimer": customDisclaimer,
+	}
+	if labels != nil {
+		reqBody["labels"] = labels
+	}
+
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/workspaces/current/tool-provider/api/update",
+		Body:   reqBody,
+	}
+	var resp models.OperationResponse
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
+// 删除API工具提供商接口
+func (c *Client) DeleteToolApiProvider(ctx context.Context, provider string) (*models.OperationResponse, error) {
+	reqBody := map[string]interface{}{
+		"provider": provider,
+	}
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/workspaces/current/tool-provider/api/delete",
+		Body:   reqBody,
+	}
+	var resp models.OperationResponse
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}

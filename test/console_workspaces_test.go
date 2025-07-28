@@ -11,7 +11,7 @@ import (
 	"github.com/kingfs/godify/models"
 )
 
-var workspaces_use_real_url = false
+var workspaces_use_real_url = true
 
 // mock server，路径和返回内容严格参考workspaces.go接口实现
 func SetupWorkspacesMockServer() *httptest.Server {
@@ -247,6 +247,120 @@ func SetupWorkspacesMockServer() *httptest.Server {
 		// 其他情况返回404
 		http.NotFound(w, r)
 	})
+
+	// /workspaces/current/tool-provider/builtin/{provider}/credentials_schema
+	handler.HandleFunc("/console/api/workspaces/current/tool-provider/builtin/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		path := r.URL.Path
+
+		// 处理 /delete 接口
+		if strings.Contains(path, "/delete") && r.Method == "POST" {
+			resp := models.OperationResponse{
+				Result: "success",
+			}
+			json.NewEncoder(w).Encode(resp)
+			return
+		}
+
+		// 处理 /icon 接口
+		if strings.Contains(path, "/icon") && r.Method == "GET" {
+			// 返回一个简单的图标响应
+			resp := map[string]interface{}{
+				"icon_type":       "emoji",
+				"icon":            "🔧",
+				"icon_background": "#000000",
+			}
+			json.NewEncoder(w).Encode(resp)
+			return
+		}
+
+		// 处理其他已存在的接口
+		if strings.Contains(path, "/tools") && r.Method == "GET" {
+			resp := models.BuiltinToolListResponse{
+				{
+					Author:       "test",
+					Description:  map[string]string{"en_US": "Test tool"},
+					Label:        map[string]string{"en_US": "Test Tool"},
+					Labels:       []string{"test"},
+					Name:         "test_tool",
+					OutputSchema: map[string]interface{}{},
+					Parameters:   []models.ToolParameter{},
+				},
+			}
+			json.NewEncoder(w).Encode(resp)
+			return
+		}
+
+		if strings.Contains(path, "/info") && r.Method == "GET" {
+			resp := models.ToolProviderEntity{
+				ID:                  "test-provider",
+				Author:              "test",
+				Name:                "Test Provider",
+				Description:         map[string]string{"en_US": "Test provider"},
+				Icon:                "🔧",
+				Label:               map[string]string{"en_US": "Test Provider"},
+				Type:                "builtin",
+				MaskedCredentials:   map[string]interface{}{},
+				IsTeamAuthorization: false,
+				Tools:               []interface{}{},
+				Labels:              []string{"test"},
+				AllowDelete:         true,
+			}
+			json.NewEncoder(w).Encode(resp)
+			return
+		}
+
+		if strings.Contains(path, "/update") && r.Method == "POST" {
+			resp := models.OperationResponse{
+				Result: "success",
+			}
+			json.NewEncoder(w).Encode(resp)
+			return
+		}
+
+		if strings.Contains(path, "/credentials") && r.Method == "GET" {
+			resp := map[string]interface{}{
+				"api_key":  "***",
+				"base_url": "https://api.example.com",
+			}
+			json.NewEncoder(w).Encode(resp)
+			return
+		}
+
+		if strings.Contains(path, "/credentials_schema") && r.Method == "GET" {
+			resp := models.ToolBuiltinProviderCredentialsSchemaResponse{
+				{
+					Default:  nil,
+					Label:    map[string]string{"en_US": "API Key"},
+					Required: true,
+					Type:     "text-input",
+					Variable: "api_key",
+				},
+			}
+			json.NewEncoder(w).Encode(resp)
+			return
+		}
+
+		// 其他情况返回404
+		http.NotFound(w, r)
+	})
+
+	// /workspaces/current/tool-provider/api/add
+	handler.HandleFunc("/console/api/workspaces/current/tool-provider/api/add", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == "POST" {
+			var reqBody map[string]interface{}
+			json.NewDecoder(r.Body).Decode(&reqBody)
+			resp := map[string]interface{}{
+				"result":   "success",
+				"provider": reqBody["provider"],
+				"id":       "test-api-provider-id",
+			}
+			json.NewEncoder(w).Encode(resp)
+			return
+		}
+		http.NotFound(w, r)
+	})
 	return httptest.NewServer(handler)
 }
 
@@ -393,6 +507,270 @@ func TestUpdateModelProviderModel(t *testing.T) {
 		"configs": []interface{}{},
 	}
 	resp, err := client.UpdateModelProviderModel(context.Background(), "langgenius/openai_api_compatible/openai_api_compatible", model, modelType, credentials, loadBalancing, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("resp: %+v", resp)
+}
+
+func TestGetToolProviderList(t *testing.T) {
+	mockServer := SetupWorkspacesMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+	resp, err := client.GetToolProviderList(context.Background(), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("resp: %+v", *resp)
+}
+
+func TestGetToolBuiltinProviderListTools(t *testing.T) {
+	mockServer := SetupWorkspacesMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+	resp, err := client.GetToolBuiltinProviderListTools(context.Background(), "chaitin/vuln_info_query/vuln_info_query")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("resp: %+v", *resp)
+}
+
+func TestGetToolBuiltinProviderInfo(t *testing.T) {
+	mockServer := SetupWorkspacesMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+	resp, err := client.GetToolBuiltinProviderInfo(context.Background(), "chaitin/vuln_info_query/vuln_info_query")
+	if err != nil {
+		t.Fatal(err)
+	}
+	jsonData, _ := json.MarshalIndent(resp, "", "  ")
+	t.Logf("resp: %+v", string(jsonData))
+}
+
+// func TestDeleteToolBuiltinProvider(t *testing.T) {
+// 	mockServer := SetupWorkspacesMockServer()
+// 	defer mockServer.Close()
+
+// 	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+// 	resp, err := client.DeleteToolBuiltinProvider(context.Background(), "chaitin/vuln_info_query/vuln_info_query")
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	t.Logf("resp: %+v", *resp)
+// }
+
+func TestUpdateToolBuiltinProvider(t *testing.T) {
+	mockServer := SetupWorkspacesMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+	credentials := map[string]string{
+		"typesense_api_key": "wasd",
+		"typesense_api":     "1234567890",
+	}
+	resp, err := client.UpdateToolBuiltinProvider(context.Background(), "chaitin/vuln_info_query/vuln_info_query", credentials)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("resp: %+v", *resp)
+}
+
+func TestGetToolBuiltinProviderCredentials(t *testing.T) {
+	mockServer := SetupWorkspacesMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+	resp, err := client.GetToolBuiltinProviderCredentials(context.Background(), "chaitin/vuln_info_query/vuln_info_query")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("resp: %+v", resp)
+}
+
+func TestGetToolBuiltinProviderCredentialsSchema(t *testing.T) {
+	mockServer := SetupWorkspacesMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+	resp, err := client.GetToolBuiltinProviderCredentialsSchema(context.Background(), "chaitin/vuln_info_query/vuln_info_query")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("resp: %+v", *resp)
+}
+
+func TestDeleteToolBuiltinProvider(t *testing.T) {
+	mockServer := SetupWorkspacesMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+	resp, err := client.DeleteToolBuiltinProvider(context.Background(), "chaitin/vuln_info_query/vuln_info_query")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("resp: %+v", resp)
+}
+
+func TestGetToolBuiltinProviderIcon(t *testing.T) {
+	mockServer := SetupWorkspacesMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+	resp, err := client.GetToolBuiltinProviderIcon(context.Background(), "chaitin/vuln_info_query/vuln_info_query")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("resp: %+v", resp)
+}
+
+func TestAddToolApiProvider(t *testing.T) {
+	mockServer := SetupWorkspacesMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+	credentials := map[string]interface{}{
+		"auth_type": "none",
+	}
+	schemaType := "openapi"
+	schema := `{
+      "openapi": "3.1.0",
+      "info": {
+        "title": "Get weather data",
+        "description": "Retrieves current weather data for a location.",
+        "version": "v1.0.0"
+      },
+      "servers": [
+        {
+          "url": "https://weather.example.com"
+        }
+      ],
+      "paths": {
+        "/location": {
+          "get": {
+            "description": "Get temperature for a specific location",
+            "operationId": "GetCurrentWeather",
+            "parameters": [
+              {
+                "name": "location",
+                "in": "query",
+                "description": "The city and state to retrieve the weather for",
+                "required": true,
+                "schema": {
+                  "type": "string"
+                }
+              }
+            ],
+            "deprecated": false
+          }
+        }
+      },
+      "components": {
+        "schemas": {}
+      }
+    }`
+	provider := "weather5"
+	icon := map[string]interface{}{
+		"content":    "🕵️",
+		"background": "#FEF7C3",
+	}
+	labels := []string{}
+
+	resp, err := client.AddToolApiProvider(context.Background(), provider, credentials, icon, schemaType, schema, labels, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("resp: %+v", resp)
+}
+
+func TestGetToolApiProviderListTools(t *testing.T) {
+	mockServer := SetupWorkspacesMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+	provider := "weather"
+	resp, err := client.GetToolApiProviderListTools(context.Background(), provider)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("resp: %+v", resp)
+}
+
+func TestUpdateToolApiProvider(t *testing.T) {
+	mockServer := SetupWorkspacesMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+	credentials := map[string]interface{}{
+		"auth_type":             "api_key",
+		"api_key_header":        "Authorization",
+		"api_key_value":         "asdasdasd",
+		"api_key_header_prefix": "bearer",
+		"base_url":              "https://weather.example.com",
+	}
+	schemaType := "openapi"
+	schema := `{
+		"openapi": "3.1.0",
+		"info": {
+		  "title": "Get weather6 data",
+		  "description": "Retrieves current weather data for a location.",
+		  "version": "v1.0.0"
+		},
+		"servers": [
+		  {
+			"url": "https://weather.example.com"
+		  }
+		],
+		"paths": {
+		  "/location": {
+			"get": {
+			  "description": "Get temperature for a specific location",
+			  "operationId": "GetCurrentWeather",
+			  "parameters": [
+				{
+				  "name": "location",
+				  "in": "query",
+				  "description": "The city and state to retrieve the weather for",
+				  "required": true,
+				  "schema": {
+					"type": "string"
+				  }
+				}
+			  ],
+			  "deprecated": false
+			}
+		  }
+		},
+		"components": {
+		  "schemas": {}
+		}
+	  }`
+	provider := "weather7"
+	originalProvider := "weather6"
+	icon := map[string]interface{}{
+		"type":  "emoji",
+		"value": "🔧",
+	}
+	privacyPolicy := "https://example.com/privacy"
+	customDisclaimer := "This is a test disclaimer"
+	labels := []string{"test", "api"}
+
+	resp, err := client.UpdateToolApiProvider(context.Background(), credentials, schemaType, schema, provider, originalProvider, icon, privacyPolicy, customDisclaimer, labels)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("resp: %+v", resp)
+}
+
+func TestDeleteToolApiProvider(t *testing.T) {
+	mockServer := SetupWorkspacesMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+	provider := "weather7"
+	resp, err := client.DeleteToolApiProvider(context.Background(), provider)
 	if err != nil {
 		t.Fatal(err)
 	}
