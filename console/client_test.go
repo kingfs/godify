@@ -57,7 +57,6 @@ func TestGetApps(t *testing.T) {
 
 	client := NewClient("test-token", server.URL)
 	apps, err := client.GetApps(context.Background(), 1, 20, "", "", nil, nil)
-
 	if err != nil {
 		t.Fatalf("GetApps failed: %v", err)
 	}
@@ -169,7 +168,6 @@ func TestGetDatasets(t *testing.T) {
 
 	client := NewClient("test-token", server.URL)
 	datasets, err := client.GetDatasets(context.Background(), 1, 20, "", nil, false)
-
 	if err != nil {
 		t.Fatalf("GetDatasets failed: %v", err)
 	}
