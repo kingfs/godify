@@ -621,7 +621,7 @@ type ToolProviderEntity struct {
 	Author                 string                 `json:"author"`
 	Name                   string                 `json:"name"`
 	Description            map[string]string      `json:"description"`
-	Icon                   string                 `json:"icon"`
+	Icon                   interface{}            `json:"icon"`
 	IconDark               *string                `json:"icon_dark"`
 	Label                  map[string]string      `json:"label"`
 	Type                   string                 `json:"type"`

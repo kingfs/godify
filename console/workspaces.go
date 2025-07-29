@@ -361,3 +361,93 @@ func (c *Client) DeleteToolApiProvider(ctx context.Context, provider string) (*m
 	err := c.baseClient.DoJSON(ctx, req, &resp)
 	return &resp, err
 }
+
+// CreateMCPProvider 创建 MCP Provider
+func (c *Client) CreateMCPProvider(ctx context.Context, serverURL, name string, icon interface{}, iconType, iconBackground, serverIdentifier string) (*models.ToolProviderEntity, error) {
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/workspaces/current/tool-provider/mcp",
+		Body: map[string]interface{}{
+			"server_url":        serverURL,
+			"name":              name,
+			"icon":              icon,
+			"icon_type":         iconType,
+			"icon_background":   iconBackground,
+			"server_identifier": serverIdentifier,
+		},
+	}
+	var resp models.ToolProviderEntity
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
+// UpdateMCPProvider 更新 MCP Provider
+func (c *Client) UpdateMCPProvider(ctx context.Context, providerID, serverURL, name string, icon any, iconType, iconBackground, serverIdentifier string) (*models.ToolProviderEntity, error) {
+	req := &client.Request{
+		Method: "PUT",
+		Path:   "/workspaces/current/tool-provider/mcp",
+		Body: map[string]interface{}{
+			"provider_id":       providerID,
+			"server_url":        serverURL,
+			"name":              name,
+			"icon":              icon,
+			"icon_type":         iconType,
+			"icon_background":   iconBackground,
+			"server_identifier": serverIdentifier,
+		},
+	}
+	var resp models.ToolProviderEntity
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
+// DeleteMCPProvider 删除 MCP Provider
+func (c *Client) DeleteMCPProvider(ctx context.Context, providerID string) (map[string]interface{}, error) {
+	req := &client.Request{
+		Method: "DELETE",
+		Path:   "/workspaces/current/tool-provider/mcp",
+		Body: map[string]interface{}{
+			"provider_id": providerID,
+		},
+	}
+	var resp map[string]interface{}
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return resp, err
+}
+
+// GetMCPProviderDetail 获取 MCP Provider 详情
+func (c *Client) GetMCPProviderDetail(ctx context.Context, providerID string) (*models.ToolProviderEntity, error) {
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/workspaces/current/tool-provider/mcp/tools/" + providerID,
+	}
+	var resp models.ToolProviderEntity
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
+// UpdateMCPProviderTools 拉取 MCP Provider 工具列表
+func (c *Client) UpdateMCPProviderTools(ctx context.Context, providerID string) (*models.OperationResponse, error) {
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/workspaces/current/tool-provider/mcp/update/" + providerID,
+	}
+	var resp models.OperationResponse
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
+// AuthMCPProvider MCP Provider 认证
+func (c *Client) AuthMCPProvider(ctx context.Context, providerID, authorizationCode string) (*models.OperationResponse, error) {
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/workspaces/current/tool-provider/mcp/auth",
+		Body: map[string]interface{}{
+			"provider_id":        providerID,
+			"authorization_code": authorizationCode,
+		},
+	}
+	var resp models.OperationResponse
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
