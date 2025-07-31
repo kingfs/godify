@@ -7,24 +7,17 @@ import (
 	"github.com/kingfs/godify/models"
 )
 
-func (c *Client) GetAccountProfile(ctx context.Context, email string, password string) (*models.Account, error) {
-	auth_token, err := c.Login(ctx, &models.LoginRequest{
-		Email:    email,
-		Password: password,
-	})
-	if err != nil {
-		return nil, err
-	}
+func (c *Client) GetAccountProfile(ctx context.Context, auth_token string) (*models.Account, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/account/profile",
 		Headers: map[string]string{
-			"Authorization": "Bearer " + auth_token.Data.AccessToken,
+			"Authorization": "Bearer " + auth_token,
 		},
 	}
 
 	var result models.Account
-	err = c.baseClient.DoJSON(ctx, req, &result)
+	err := c.baseClient.DoJSON(ctx, req, &result)
 	return &result, err
 }
 

@@ -55,12 +55,14 @@ func TestLogin(t *testing.T) {
 }
 
 func TestGetAccountProfile(t *testing.T) {
+	auth_token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNTc3ODc2NjAtYWJhMy00ZmUyLTgzYWItNDFhZDE3OWIyNTQxIiwiZXhwIjoxNzUzOTYxNzE1LCJpc3MiOiJTRUxGX0hPU1RFRCIsInN1YiI6IkNvbnNvbGUgQVBJIFBhc3Nwb3J0In0.ufwwIMijC_Mv4_KiQaKJ-yzuPhw-2DstZLDnMXGVjeE"
+
 	server := SetupAccountMockServer()
 	defer server.Close()
 
 	client := TestNewClientWithBaseURL(server.URL, account_use_real_url)
 
-	resp, err := client.GetAccountProfile(context.Background(), "test@test.com", "test123456")
+	resp, err := client.GetAccountProfile(context.Background(), auth_token)
 	if err != nil {
 		t.Fatalf("GetAccountProfile failed: %v", err)
 	}
