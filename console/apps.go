@@ -56,7 +56,10 @@ func (c *Client) GetApps(ctx context.Context, page, limit int, mode, name string
 
 	var result models.ConsoleAppListResponse
 	err := c.baseClient.DoJSON(ctx, req, &result)
-	return &result, err
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
 // CreateApp 创建应用
