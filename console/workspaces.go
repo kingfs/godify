@@ -451,3 +451,13 @@ func (c *Client) AuthMCPProvider(ctx context.Context, providerID, authorizationC
 	err := c.baseClient.DoJSON(ctx, req, &resp)
 	return &resp, err
 }
+
+func (c *Client) GetTenantList(ctx context.Context) (*any, error) {
+	req := &client.Request{
+		Method: "GET",
+		Path:   "/workspaces",
+	}
+	var resp any
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}

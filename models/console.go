@@ -701,3 +701,7 @@ type AppImportResponse struct {
 	ImportedDSLVersion string                 `json:"imported_dsl_version,omitempty"`
 	Data               map[string]interface{} `json:"data,omitempty"`
 }
+
+type TenantListResponse struct {
+	Workspaces []Workspace `json:"workspaces"`
+}
