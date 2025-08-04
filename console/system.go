@@ -92,14 +92,3 @@ func (c *Client) Init(ctx context.Context, initPassword string) (*models.ResultR
 	err := c.baseClient.DoJSON(ctx, req, &result)
 	return &result, err
 }
-
-func GetSystemFeatures()
-	req := &client.Request{
-		Method: "GET",
-		Path:   "/system/features",
-	}
-
-	var result models.ResultResponse
-	err := c.baseClient.DoJSON(ctx, req, &result)
-	return &result, err
-}

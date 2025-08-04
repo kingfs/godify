@@ -20,8 +20,8 @@ func NewServiceClient(appToken, baseURL string) *service.Client {
 // NewWebClient 创建 Web API 客户端
 // appCode: 应用代码，可以从Dify控制台获取
 // baseURL: Dify 服务器地址，例如 "https://api.dify.ai"
-func NewWebClient(appCode, baseURL string) *web.Client {
-	return web.NewClient(appCode, baseURL)
+func NewWebClient(baseURL string) *web.Client {
+	return web.NewClient(baseURL)
 }
 
 // NewConsoleClient 创建 Console API 客户端 (管理员API)

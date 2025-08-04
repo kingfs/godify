@@ -16,7 +16,7 @@ type Client struct {
 // NewClient 创建Service API客户端
 func NewClient(appToken, baseURL string) *Client {
 	config := &client.ClientConfig{
-		BaseURL:    baseURL,
+		BaseURL:    baseURL + "/v1",
 		AuthType:   client.AuthTypeBearer,
 		Token:      appToken,
 		Timeout:    30 * time.Second,

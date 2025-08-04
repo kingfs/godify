@@ -86,16 +86,17 @@ func main() {
 	defer server.Close()
 
 	// 创建客户端
-	client := dify.NewWebClient("test-app-code", server.URL)
+	client := dify.NewWebClient(server.URL)
+	client.WithAppCode("test-app-code")
 
 	// 测试1: 获取访问令牌
 	fmt.Println("\n=== 测试获取访问令牌 ===")
-	err := client.GetPassport(context.Background(), "test-user-123")
+	token, err := client.GetPassport(context.Background(), "test-user-123")
 	if err != nil {
 		fmt.Printf("❌ 获取访问令牌失败: %v\n", err)
 		return
 	}
-	fmt.Printf("✅ 访问令牌获取成功\n")
+	fmt.Printf("✅ 访问令牌获取成功: %s\n", token)
 
 	// 测试2: 获取应用元数据 (需要认证)
 	fmt.Println("\n=== 测试获取应用元数据 ===")

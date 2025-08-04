@@ -11,12 +11,14 @@ import (
 
 func main() {
 	// 示例：完整的工作流使用流程
+	appCode := "your-web-app-code"
 	apiKey := "your-web-api-key"
 	baseURL := "https://api.dify.ai"
 
 	// 1. 使用Web API运行工作流
 	fmt.Println("=== Web API工作流示例 ===")
-	webClient := dify.NewWebClient(apiKey, baseURL)
+	webClient := dify.NewWebClient(baseURL)
+	webClient.WithAppCode(appCode)
 
 	workflowReq := &models.WorkflowRunRequest{
 		Inputs: map[string]interface{}{
