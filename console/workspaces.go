@@ -452,12 +452,15 @@ func (c *Client) AuthMCPProvider(ctx context.Context, providerID, authorizationC
 	return &resp, err
 }
 
-func (c *Client) GetTenantList(ctx context.Context) (*any, error) {
+func (c *Client) GetTenantList(ctx context.Context, auth_token string) (*models.TenantListResponse, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/workspaces",
+		Headers: map[string]string{
+			"Authorization": "Bearer " + auth_token,
+		},
 	}
-	var resp any
+	var resp models.TenantListResponse
 	err := c.baseClient.DoJSON(ctx, req, &resp)
 	return &resp, err
 }

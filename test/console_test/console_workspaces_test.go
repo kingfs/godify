@@ -782,7 +782,8 @@ func TestGetTenantList(t *testing.T) {
 	defer mockServer.Close()
 
 	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
-	resp, err := client.GetTenantList(context.Background())
+	auth_token := "1234567890"
+	resp, err := client.GetTenantList(context.Background(), auth_token)
 	if err != nil {
 		t.Fatal(err)
 	}
