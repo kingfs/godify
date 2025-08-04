@@ -10,9 +10,33 @@ import (
 )
 
 func TestNewWebClient(t *testing.T) {
-	client := NewClient("test-api-key", "https://api.example.com")
+	client := NewClient("https://api.example.com")
+	client.WithAppCode("test-app-code")
 	if client == nil {
 		t.Fatal("Expected client to be created")
+	}
+}
+
+func TestGetPassport(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, err := w.Write([]byte(`{"access_token": "test-token"}`))
+		if err != nil {
+			t.Errorf("Failed to write response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL)
+	client.WithAppCode("test-app-code")
+	token, err := client.GetPassport(context.Background(), "")
+	if err != nil {
+		t.Fatalf("GetPassport failed: %v", err)
+	}
+
+	if token != "test-token" {
+		t.Errorf("Expected token 'test-token', got %s", token)
 	}
 }
 
@@ -36,7 +60,8 @@ func TestGetWebAppAccessMode(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("test-api-key", server.URL)
+	client := NewClient(server.URL)
+	client.WithAppCode("test-app-code")
 	accessMode, err := client.GetWebAppAccessMode(context.Background(), "test-app-id", "")
 
 	if err != nil {
@@ -97,7 +122,8 @@ func TestGetConversations(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("test-api-key", server.URL)
+	client := NewClient(server.URL)
+	client.WithAppCode("test-app-code")
 	resp, err := client.GetConversations(context.Background(), "", 20, nil, "")
 
 	if err != nil {
@@ -158,7 +184,8 @@ func TestWebChat(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("test-api-key", server.URL)
+	client := NewClient(server.URL)
+	client.WithAppCode("test-app-code")
 	req := &ChatRequest{
 		Inputs: map[string]interface{}{},
 		Query:  "Hello",
