@@ -18,7 +18,7 @@ type Client struct {
 }
 
 // NewClient 创建Web API客户端 (需要app code而不是api key)
-func NewClient(appCode, baseURL string) *Client {
+func NewClient(baseURL string) *Client {
 	config := &client.ClientConfig{
 		BaseURL:    baseURL + "/api",
 		AuthType:   client.AuthTypeBearer,
@@ -29,8 +29,12 @@ func NewClient(appCode, baseURL string) *Client {
 
 	return &Client{
 		baseClient: client.NewBaseClient(config),
-		appCode:    appCode,
 	}
+}
+
+func (c *Client) WithAppCode(appCode string) *Client {
+	c.appCode = appCode
+	return c
 }
 
 // PassportResponse Passport响应
@@ -39,7 +43,7 @@ type PassportResponse struct {
 }
 
 // GetPassport 获取访问令牌
-func (c *Client) GetPassport(ctx context.Context, userID string) error {
+func (c *Client) GetPassport(ctx context.Context, userID string) (string, error) {
 	req := &client.Request{
 		Method: "GET",
 		Path:   "/passport",
@@ -55,18 +59,21 @@ func (c *Client) GetPassport(ctx context.Context, userID string) error {
 
 	var result PassportResponse
 	if err := c.baseClient.DoJSON(ctx, req, &result); err != nil {
-		return fmt.Errorf("failed to get passport: %w", err)
+		return "", fmt.Errorf("failed to get passport: %w", err)
 	}
 
 	c.accessToken = result.AccessToken
 	c.baseClient.WithToken(result.AccessToken)
-	return nil
+	return result.AccessToken, nil
 }
 
 // ensureAuthenticated 确保已认证
 func (c *Client) ensureAuthenticated(ctx context.Context) error {
 	if c.accessToken == "" {
-		return c.GetPassport(ctx, "")
+		_, err := c.GetPassport(ctx, "")
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
