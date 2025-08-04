@@ -776,3 +776,15 @@ func TestDeleteToolApiProvider(t *testing.T) {
 	}
 	t.Logf("resp: %+v", resp)
 }
+
+func TestGetTenantList(t *testing.T) {
+	mockServer := SetupWorkspacesMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+	resp, err := client.GetTenantList(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("resp: %+v", *resp)
+}
