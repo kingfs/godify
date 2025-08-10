@@ -47,6 +47,16 @@ func (c *Client) WithHTTPClient(httpClient *http.Client) *Client {
 	return c
 }
 
+// RedirectError is returned when the API returns a redirect status code.
+type RedirectError struct {
+	StatusCode int
+	Location   string
+}
+
+func (e *RedirectError) Error() string {
+	return fmt.Sprintf("api returned a redirect to %s (status: %d)", e.Location, e.StatusCode)
+}
+
 // sendRequest handles sending a JSON request and decoding a JSON response.
 func (c *Client) sendRequest(ctx context.Context, method, path string, payload, result any, extraHeaders map[string]string) error {
 	var body io.Reader
@@ -78,11 +88,23 @@ func (c *Client) sendRequest(ctx context.Context, method, path string, payload, 
 		req.Header.Set(key, value)
 	}
 
+	// Prevent auto-redirects
+	c.httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to send request: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 && resp.StatusCode < 400 {
+		return &RedirectError{
+			StatusCode: resp.StatusCode,
+			Location:   resp.Header.Get("Location"),
+		}
+	}
 
 	if resp.StatusCode >= http.StatusBadRequest {
 		return c.decodeError(resp)
