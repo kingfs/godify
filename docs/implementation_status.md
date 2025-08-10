@@ -2,7 +2,7 @@
 
 This document tracks the implementation status of the `godify` Go SDK against the Dify API version 1.7.1.
 
-*Last Updated: 2025-08-08*
+*Last Updated: 2025-08-09*
 
 ## Summary
 
@@ -10,7 +10,7 @@ This document tracks the implementation status of the `godify` Go SDK against th
 | :--- | :--- | :--- | :--- | :--- |
 | `service_api` | **Complete** | 17 / 17 | 100% |
 | `web` | **Complete** | 14 / 14 | 100% |
-| `console` | **In Progress** | 19 / 62 | ~31% |
+| `console` | **In Progress** | 36 / 62 | ~58% |
 | `files` | **Not Started** | 0 / 3 | 0% |
 | `inner_api` | **Not Started** | 0 / 3 | 0% |
 | `mcp` | **Not Started** | 0 / 1 | 0% |
@@ -92,8 +92,6 @@ All controller files in this group have been implemented.
 - `controllers.console.app.completion.py`
 - `controllers.console.app.conversation.py`
 - `controllers.console.app.conversation_variables.py`
-
-### Not Implemented:
 - `controllers.console.app.generator.py`
 - `controllers.console.app.mcp_server.py`
 - `controllers.console.app.message.py`
@@ -113,6 +111,8 @@ All controller files in this group have been implemented.
 - `controllers.console.auth.login.py`
 - `controllers.console.auth.oauth.py`
 - `controllers.console.billing.billing.py`
+
+### Not Implemented:
 - `controllers.console.billing.compliance.py`
 - `controllers.console.datasets.data_source.py`
 - `controllers.console.datasets.datasets.py`
