@@ -1,370 +1,334 @@
 package client
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"mime/multipart"
 	"net/http"
-	"net/url"
-	"strings"
 	"time"
-
-	"github.com/kingfs/godify/config"
-	"github.com/kingfs/godify/errors"
-	"github.com/kingfs/godify/metrics"
 )
-
-// AuthType 认证类型
-type AuthType string
 
 const (
-	AuthTypeBearer AuthType = "Bearer"
-	AuthTypeAPIKey AuthType = "ApiKey"
+	defaultTimeout = 80 * time.Second
 )
 
-// ClientConfig 客户端配置
-type ClientConfig struct {
-	BaseURL    string
-	AuthType   AuthType
-	Token      string
-	HTTPClient *http.Client
-	Timeout    time.Duration
-	MaxRetries int
-
-	WorkspaceID *string
-
-	// 监控配置
-	Metrics *metrics.Metrics
-
-	// 连接池配置
-	MaxIdleConns        int
-	MaxIdleConnsPerHost int
-	IdleConnTimeout     time.Duration
-}
-
-// BaseClient 基础HTTP客户端
-type BaseClient struct {
-	config     *ClientConfig
+// Client is the main client for the Dify API.
+type Client struct {
+	host       string
+	apiKey     string
+	adminKey   string
 	httpClient *http.Client
-	logger     *slog.Logger
-	metrics    *metrics.Metrics
 }
 
-// NewBaseClient 创建基础客户端
-func NewBaseClient(config *ClientConfig) *BaseClient {
-	if config.HTTPClient == nil {
-		// 配置连接池
-		transport := &http.Transport{
-			MaxIdleConns:        config.MaxIdleConns,
-			MaxIdleConnsPerHost: config.MaxIdleConnsPerHost,
-			IdleConnTimeout:     config.IdleConnTimeout,
-		}
-
-		config.HTTPClient = &http.Client{
-			Timeout:   config.Timeout,
-			Transport: transport,
-		}
-	}
-
-	if config.Timeout == 0 {
-		config.Timeout = 30 * time.Second
-	}
-
-	if config.MaxRetries == 0 {
-		config.MaxRetries = 3
-	}
-
-	// 设置默认监控
-	if config.Metrics == nil {
-		config.Metrics = metrics.NewMetrics(false) // 默认关闭监控
-	}
-
-	return &BaseClient{
-		config:     config,
-		httpClient: config.HTTPClient,
-		logger:     slog.Default(),
-		metrics:    config.Metrics,
+// NewClient creates a new Dify API client.
+func NewClient(host, apiKey string) *Client {
+	return &Client{
+		host:   host,
+		apiKey: apiKey,
+		httpClient: &http.Client{
+			Timeout: defaultTimeout,
+		},
 	}
 }
 
-// WithWorkspaceID 设置工作空间ID
-func (c *BaseClient) WithWorkspaceID(workspaceID string) *BaseClient {
-	c.config.WorkspaceID = &workspaceID
+// WithAdminKey sets the admin API key for the client.
+func (c *Client) WithAdminKey(adminKey string) *Client {
+	c.adminKey = adminKey
 	return c
 }
 
-// WithToken 设置认证token
-func (c *BaseClient) WithToken(token string) *BaseClient {
-	c.config.Token = token
+// WithHTTPClient sets a custom http.Client for the Dify client.
+func (c *Client) WithHTTPClient(httpClient *http.Client) *Client {
+	c.httpClient = httpClient
 	return c
 }
 
-// WithLogger 设置日志器
-func (c *BaseClient) WithLogger(logger *slog.Logger) *BaseClient {
-	c.logger = logger
-	return c
-}
-
-// GetMetrics 获取监控指标
-func (c *BaseClient) GetMetrics() *metrics.Metrics {
-	return c.metrics
-}
-
-// NewClientFromConfig 从配置创建客户端
-func NewClientFromConfig(configPath string) (*BaseClient, error) {
-	cfg, err := config.LoadConfig(configPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
-	}
-
-	// 创建监控
-	metrics := metrics.NewMetrics(cfg.EnableMetrics)
-
-	// 创建客户端配置
-	clientConfig := &ClientConfig{
-		BaseURL:             cfg.BaseURL,
-		AuthType:            AuthType(cfg.AuthType),
-		Token:               cfg.Token,
-		Timeout:             cfg.Timeout,
-		MaxRetries:          cfg.MaxRetries,
-		WorkspaceID:         &cfg.WorkspaceID,
-		Metrics:             metrics,
-		MaxIdleConns:        cfg.MaxIdleConns,
-		MaxIdleConnsPerHost: cfg.MaxIdleConnsPerHost,
-		IdleConnTimeout:     cfg.IdleConnTimeout,
-	}
-
-	return NewBaseClient(clientConfig), nil
-}
-
-// Request 请求参数
-type Request struct {
-	Method  string
-	Path    string
-	Headers map[string]string
-	Query   map[string]string
-	Body    interface{}
-}
-
-// Response 响应
-type Response struct {
+// RedirectError is returned when the API returns a redirect status code.
+type RedirectError struct {
 	StatusCode int
-	Headers    http.Header
-	Body       []byte
+	Location   string
 }
 
-// Do 执行HTTP请求
-func (c *BaseClient) Do(ctx context.Context, req *Request) (*Response, error) {
-	startTime := time.Now()
+func (e *RedirectError) Error() string {
+	return fmt.Sprintf("api returned a redirect to %s (status: %d)", e.Location, e.StatusCode)
+}
 
-	// 记录请求开始
-	c.logger.DebugContext(ctx, "Starting HTTP request", "method", req.Method, "path", req.Path, "url", c.config.BaseURL+req.Path)
-
-	// 构建URL
-	u, err := url.Parse(c.config.BaseURL + req.Path)
-	if err != nil {
-		c.logger.ErrorContext(ctx, "Failed to parse URL", "error", err)
-		return nil, fmt.Errorf("invalid URL: %w", err)
-	}
-
-	// 添加查询参数
-	if req.Query != nil {
-		q := u.Query()
-		for k, v := range req.Query {
-			q.Set(k, v)
-		}
-		u.RawQuery = q.Encode()
-	}
-
-	// 准备请求体
+// sendRequest handles sending a JSON request and decoding a JSON response.
+func (c *Client) sendRequest(ctx context.Context, method, path string, payload, result any, extraHeaders map[string]string) error {
 	var body io.Reader
-	var contentType string
-
-	if req.Body != nil {
-		switch v := req.Body.(type) {
-		case string:
-			body = strings.NewReader(v)
-			contentType = "text/plain"
-		case []byte:
-			body = bytes.NewReader(v)
-			contentType = "application/octet-stream"
-		default:
-			jsonData, err := json.Marshal(v)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal request body: %w", err)
-			}
-			body = bytes.NewReader(jsonData)
-			contentType = "application/json"
+	if payload != nil {
+		b, err := json.Marshal(payload)
+		if err != nil {
+			return fmt.Errorf("failed to marshal payload: %w", err)
 		}
+		body = bytes.NewReader(b)
 	}
 
-	// 创建HTTP请求
-	httpReq, err := http.NewRequestWithContext(ctx, req.Method, u.String(), body)
+	req, err := http.NewRequestWithContext(ctx, method, c.host+path, body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// 设置Content-Type
-	if contentType != "" {
-		httpReq.Header.Set("Content-Type", contentType)
-	}
-
-	// 设置认证头
-	switch c.config.AuthType {
-	case AuthTypeBearer:
-		httpReq.Header.Set("Authorization", "Bearer "+c.config.Token)
-	case AuthTypeAPIKey:
-		httpReq.Header.Set("Authorization", "Bearer "+c.config.Token)
-	}
-
-	if c.config.WorkspaceID != nil {
-		httpReq.Header.Set("X-Workspace-Id", *c.config.WorkspaceID)
-	}
-
-	// 设置自定义头
-	for k, v := range req.Headers {
-		httpReq.Header.Set(k, v)
-	}
-
-	// 执行请求（带重试）
-	var resp *http.Response
-	var lastErr error
-	for i := 0; i <= c.config.MaxRetries; i++ {
-		resp, err = c.httpClient.Do(httpReq)
-		if err == nil && resp.StatusCode < 500 {
-			break
-		}
-
-		lastErr = err
-		c.logger.WarnContext(ctx, "Request failed, retrying...", "attempt", i+1, "max_retries", c.config.MaxRetries, "error", err)
-
-		if i < c.config.MaxRetries {
-			time.Sleep(time.Duration(i+1) * time.Second)
+	// Default to apiKey, but allow override from extraHeaders
+	authHeader := "Bearer " + c.apiKey
+	if extraHeaders != nil {
+		if val, ok := extraHeaders["Authorization"]; ok {
+			authHeader = val
+			delete(extraHeaders, "Authorization") // remove it from extraHeaders to avoid setting it twice
 		}
 	}
+	req.Header.Set("Authorization", authHeader)
+	req.Header.Set("Content-Type", "application/json")
 
-	if lastErr != nil {
-		c.logger.ErrorContext(ctx, "Request failed after all retries", "error", lastErr)
-		return nil, fmt.Errorf("request failed: %w", lastErr)
+	for key, value := range extraHeaders {
+		req.Header.Set(key, value)
 	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			// 记录关闭错误，但不影响主流程
-			c.logger.WarnContext(ctx, "Failed to close response body", "error", closeErr)
-		}
-	}()
 
-	// 读取响应体
-	respBody, err := io.ReadAll(resp.Body)
+	// Prevent auto-redirects
+	c.httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 && resp.StatusCode < 400 {
+		return &RedirectError{
+			StatusCode: resp.StatusCode,
+			Location:   resp.Header.Get("Location"),
+		}
 	}
 
-	response := &Response{
-		StatusCode: resp.StatusCode,
-		Headers:    resp.Header,
-		Body:       respBody,
+	if resp.StatusCode >= http.StatusBadRequest {
+		return c.decodeError(resp)
 	}
 
-	// 记录请求完成
-	duration := time.Since(startTime)
-	c.logger.DebugContext(ctx, "HTTP request completed", "status_code", resp.StatusCode, "duration_ms", duration.Milliseconds(), "body_size", len(respBody))
-
-	// 记录监控指标
-	c.metrics.RecordRequest(resp.StatusCode < 400, duration)
-
-	// 检查错误响应
-	if resp.StatusCode >= 400 {
-		c.logger.ErrorContext(ctx, "HTTP request failed", "status_code", resp.StatusCode, "body", string(respBody))
-		return response, c.parseError(ctx, response)
-	}
-
-	return response, nil
-}
-
-// DoJSON 执行JSON请求并解析响应
-func (c *BaseClient) DoJSON(ctx context.Context, req *Request, result interface{}) error {
-	resp, err := c.Do(ctx, req)
-	if err != nil {
-		return err
-	}
-
-	if result != nil && len(resp.Body) > 0 {
-		if err := json.Unmarshal(resp.Body, result); err != nil {
-			return fmt.Errorf("failed to unmarshal response: %w", err)
+	if result != nil {
+		if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
+			return fmt.Errorf("failed to decode response: %w", err)
 		}
 	}
 
 	return nil
 }
 
-// UploadFile 上传文件
-func (c *BaseClient) UploadFile(ctx context.Context, path string, fieldName string, filename string, fileData []byte, extraFields map[string]string) (*Response, error) {
-	var buf bytes.Buffer
-	writer := multipart.NewWriter(&buf)
+// SendMultipartRequestWithJSON sends a multipart/form-data request with a file and a JSON payload in a 'data' field.
+func (c *Client) SendMultipartRequestWithJSON(ctx context.Context, path string, file io.Reader, filename string, jsonData any, result any) error {
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
 
-	// 添加文件字段
-	part, err := writer.CreateFormFile(fieldName, filename)
+	// Marshal JSON data and add it as a field
+	jsonBytes, err := json.Marshal(jsonData)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create form file: %w", err)
+		return fmt.Errorf("failed to marshal json data: %w", err)
+	}
+	if err := w.WriteField("data", string(jsonBytes)); err != nil {
+		return fmt.Errorf("failed to write json data field: %w", err)
 	}
 
-	if _, err := part.Write(fileData); err != nil {
-		return nil, fmt.Errorf("failed to write file data: %w", err)
-	}
-
-	// 添加额外字段
-	for key, value := range extraFields {
-		if err := writer.WriteField(key, value); err != nil {
-			return nil, fmt.Errorf("failed to write field %s: %w", key, err)
+	// Add file to the form
+	if file != nil {
+		fw, err := w.CreateFormFile("file", filename)
+		if err != nil {
+			return fmt.Errorf("failed to create form file: %w", err)
+		}
+		if _, err = io.Copy(fw, file); err != nil {
+			return fmt.Errorf("failed to copy file to buffer: %w", err)
 		}
 	}
 
-	if err := writer.Close(); err != nil {
-		return nil, fmt.Errorf("failed to close multipart writer: %w", err)
+	w.Close()
+
+	req, err := http.NewRequestWithContext(ctx, "POST", c.host+path, &b)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req := &Request{
-		Method: "POST",
-		Path:   path,
-		Headers: map[string]string{
-			"Content-Type": writer.FormDataContentType(),
-		},
-		Body: buf.Bytes(),
+	req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		return c.decodeError(resp)
 	}
 
-	return c.Do(ctx, req)
+	if result != nil {
+		if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
+			return fmt.Errorf("failed to decode response: %w", err)
+		}
+	}
+
+	return nil
 }
 
-// parseError 解析错误响应
-func (c *BaseClient) parseError(ctx context.Context, resp *Response) error {
-	var errResp errors.ErrorResponse
-	if err := json.Unmarshal(resp.Body, &errResp); err != nil {
-		// 如果无法解析为结构化错误，返回通用错误
-		c.logger.WarnContext(ctx, "Failed to parse structured error response", "status_code", resp.StatusCode, "body", string(resp.Body), "error", err)
+// SendMultipartRequest handles sending a multipart/form-data request, typically for file uploads.
+func (c *Client) SendMultipartRequest(ctx context.Context, path string, file io.Reader, filename string, fields map[string]string, result any) error {
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
 
-		// 记录错误类型
-		c.metrics.RecordError("parse_error")
-
-		return &errors.APIError{
-			StatusCode: resp.StatusCode,
-			Message:    string(resp.Body),
+	// Add fields to the form
+	for key, value := range fields {
+		if err := w.WriteField(key, value); err != nil {
+			return fmt.Errorf("failed to write field %s: %w", key, err)
 		}
 	}
 
-	// 记录特定错误类型
-	c.metrics.RecordError(errResp.Code)
-
-	c.logger.ErrorContext(ctx, "API error occurred", "status_code", resp.StatusCode, "error_code", errResp.Code, "message", errResp.Message)
-
-	return &errors.APIError{
-		StatusCode: resp.StatusCode,
-		Code:       errResp.Code,
-		Message:    errResp.Message,
-		Details:    errResp.Details,
+	// Add file to the form
+	if file != nil {
+		fw, err := w.CreateFormFile("file", filename)
+		if err != nil {
+			return fmt.Errorf("failed to create form file: %w", err)
+		}
+		if _, err = io.Copy(fw, file); err != nil {
+			return fmt.Errorf("failed to copy file to buffer: %w", err)
+		}
 	}
+
+	w.Close()
+
+	req, err := http.NewRequestWithContext(ctx, "POST", c.host+path, &b)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		return c.decodeError(resp)
+	}
+
+	if result != nil {
+		if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
+			return fmt.Errorf("failed to decode response: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// SendRequestRaw handles requests where the response body is not JSON, but raw bytes.
+func (c *Client) SendRequestRaw(ctx context.Context, method, path string, payload any) ([]byte, http.Header, error) {
+	var body io.Reader
+	if payload != nil {
+		b, err := json.Marshal(payload)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to marshal payload: %w", err)
+		}
+		body = bytes.NewReader(b)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, c.host+path, body)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		return nil, nil, c.decodeError(resp)
+	}
+
+	rawBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to read raw response body: %w", err)
+	}
+
+	return rawBody, resp.Header, nil
+}
+
+// SendSSEQuest sends a request and returns a channel to read Server-Sent Events.
+func (c *Client) SendSSEQuest(ctx context.Context, method, path string, payload any) (<-chan []byte, error) {
+	var body io.Reader
+	if payload != nil {
+		b, err := json.Marshal(payload)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal payload: %w", err)
+		}
+		body = bytes.NewReader(b)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, c.host+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "text/event-stream")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		defer resp.Body.Close()
+		return nil, c.decodeError(resp)
+	}
+
+	events := make(chan []byte)
+	go func() {
+		defer close(events)
+		defer resp.Body.Close()
+
+		scanner := bufio.NewScanner(resp.Body)
+		for scanner.Scan() {
+			line := scanner.Bytes()
+			// SSE data lines start with "data: "
+			if bytes.HasPrefix(line, []byte("data: ")) {
+				events <- bytes.TrimPrefix(line, []byte("data: "))
+			}
+		}
+		if err := scanner.Err(); err != nil {
+			// Handle error, maybe log it or send it over a separate error channel
+			// For simplicity, we'll just log it here.
+			// In a real-world scenario, a more robust error handling would be needed.
+			fmt.Printf("error reading sse stream: %v\n", err)
+		}
+	}()
+
+	return events, nil
+}
+
+
+func (c *Client) decodeError(resp *http.Response) error {
+	// Try to decode the error response body
+	var errResp struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+		Status  int    `json:"status"`
+	}
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	if err := json.Unmarshal(bodyBytes, &errResp); err == nil && errResp.Message != "" {
+		return fmt.Errorf("api error: %s (status: %d, code: %s)", errResp.Message, resp.StatusCode, errResp.Code)
+	}
+
+	// Fallback if error response is not in the expected format or body is empty
+	return fmt.Errorf("api error: received status code %d, body: %s", resp.StatusCode, string(bodyBytes))
 }
