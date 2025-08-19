@@ -300,3 +300,17 @@ func (c *Client) DeleteAppAPIKey(ctx context.Context, appID, keyID string) error
 	var result models.OperationResponse
 	return c.baseClient.DoJSON(ctx, req, &result)
 }
+
+func (c *Client) PublishApp(ctx context.Context, appID string) error {
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/apps/" + appID + "/workflows/publish",
+		Body: map[string]interface{}{
+			"marked_name":    "",
+			"marked_comment": "",
+		},
+	}
+
+	var result models.OperationResponse
+	return c.baseClient.DoJSON(ctx, req, &result)
+}

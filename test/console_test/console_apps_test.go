@@ -182,3 +182,14 @@ func TestDeleteApp(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestPublishApp(t *testing.T) {
+	mockServer := SetupAppsMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, apps_use_real_url)
+	err := client.PublishApp(context.Background(), "2235c7fe-2c3a-42cf-a5b8-768f04264388")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
