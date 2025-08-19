@@ -789,3 +789,58 @@ func TestGetTenantList(t *testing.T) {
 	}
 	t.Logf("resp: %+v", *resp)
 }
+
+func TestSetModelProvider(t *testing.T) {
+	mockServer := SetupWorkspacesMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+	modelProvider := "langgenius/openai_api_compatible/openai_api_compatible"
+	request := &models.SetModelProvidersRequest{
+		Model:     "qwen-max",
+		ModelType: "llm",
+		Credentials: models.SetModelProviderCredentials{
+			Mode:                    "chat",
+			ContextSize:             "4096",
+			MaxTokensToSample:       "4096",
+			AgentThoughSupport:      "not_supported",
+			FunctionCallingType:     "no_call",
+			StreamFunctionCalling:   "not_supported",
+			VisionSupport:           "no_support",
+			StructuredOutputSupport: "not_supported",
+			StreamModeAuth:          "not_use",
+			StreamModeDelimiter:     "\\n\\n",
+			Voices:                  "alloy",
+			ApiKey:                  "sk-2yh4OEaCi5dkMwuoZZHRxoesxOcLcDUWgfu4F8thyWDwoRen",
+			EndpointUrl:             "https://aiapi.chaitin.net/v1",
+		},
+		LoadBalancing: models.SetModelProviderLoadBalancing{
+			Enabled: false,
+			Configs: []string{},
+		},
+	}
+	resp, err := client.SetModelProvider(context.Background(), modelProvider, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("resp: %+v", resp)
+}
+
+func TestUpdatePluginCredential(t *testing.T) {
+	mockServer := SetupWorkspacesMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
+	provider := "chaitin/vuln_info_query/vuln_info_query"
+	credential := map[string]any{
+		"typesense_api_key": "wenjinadmin123",
+		"typesense_api":     "123",
+	}
+	credentialType := "api-key"
+	credentialName := "2wenjin@chaitin.com"
+	resp, err := client.UpdatePluginCredential(context.Background(), provider, credential, credentialType, credentialName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("resp: %+v", resp)
+}

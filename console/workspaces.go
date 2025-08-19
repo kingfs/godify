@@ -464,3 +464,29 @@ func (c *Client) GetTenantList(ctx context.Context, auth_token string) (*models.
 	err := c.baseClient.DoJSON(ctx, req, &resp)
 	return &resp, err
 }
+
+func (c *Client) SetModelProvider(ctx context.Context, modelProvider string, request *models.SetModelProvidersRequest) (*models.OperationResponse, error) {
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/workspaces/current/model-providers/" + modelProvider + "/models",
+		Body:   request,
+	}
+	var resp models.OperationResponse
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
+func (c *Client) UpdatePluginCredential(ctx context.Context, provider string, credential map[string]any, credentialType, credentialName string) (*models.OperationResponse, error) {
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/workspaces/current/tool-provider/builtin/" + provider + "/add",
+		Body: map[string]any{
+			"credentials": credential,
+			"type":        credentialType,
+			"name":        credentialName,
+		},
+	}
+	var resp models.OperationResponse
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
