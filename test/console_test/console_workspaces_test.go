@@ -110,7 +110,7 @@ func SetupWorkspacesMockServer() *httptest.Server {
 						"en_US":   "Model providers compatible with OpenAI's API standard, such as LM Studio.",
 						"zh_Hans": "兼容 OpenAI API 的模型供应商，例如 LM Studio 。",
 					},
-					Help:      nil,
+					Help:      models.ProviderHelpEntity{},
 					IconLarge: nil,
 					IconSmall: map[string]string{
 						"en_US":   "/console/api/workspaces/xxx/model-providers/langgenius/openai_api_compatible/openai_api_compatible/icon_small/en_US",

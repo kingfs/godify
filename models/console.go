@@ -455,8 +455,8 @@ type ModelProvider struct {
 	ConfigurateMethods       []string              `json:"configurate_methods"`
 	CustomConfiguration      CustomConfiguration   `json:"custom_configuration"`
 	Description              map[string]string     `json:"description"`
-	Help                     *string               `json:"help"`
-	IconLarge                *string               `json:"icon_large"`
+	Help                     ProviderHelpEntity    `json:"help"`
+	IconLarge                map[string]string     `json:"icon_large"`
 	IconSmall                map[string]string     `json:"icon_small"`
 	Label                    map[string]string     `json:"label"`
 	ModelCredentialSchema    ModelCredentialSchema `json:"model_credential_schema"`
@@ -467,6 +467,11 @@ type ModelProvider struct {
 	SupportedModelTypes      []string              `json:"supported_model_types"`
 	SystemConfiguration      SystemConfiguration   `json:"system_configuration"`
 	TenantID                 string                `json:"tenant_id"`
+}
+
+type ProviderHelpEntity struct {
+	Title map[string]string `json:"title"`
+	Url   map[string]string `json:"url"`
 }
 
 type CustomConfiguration struct {
