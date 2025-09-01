@@ -18,6 +18,7 @@ type ConsoleApp struct {
 	APIBaseURL     string     `json:"api_base_url,omitempty"`
 	Tags           []AppTag   `json:"tags"`
 	AccessMode     AccessMode `json:"access_mode,omitempty"`
+	AuthorName     string     `json:"author_name,omitempty"`
 }
 
 // AppSite 应用站点信息
@@ -245,6 +246,7 @@ type ConsoleAppDetail struct {
 	UpdatedAt           UnixTime      `json:"updated_at"`
 	DeletedTools        []interface{} `json:"deleted_tools"`
 	AccessMode          *string       `json:"access_mode"`
+	AuthorName          string        `json:"author_name"`
 }
 
 // WorkflowInfo 工作流信息
