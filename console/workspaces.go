@@ -468,7 +468,7 @@ func (c *Client) GetTenantList(ctx context.Context, auth_token string) (*models.
 func (c *Client) SetModelProvider(ctx context.Context, modelProvider string, request *models.SetModelProvidersRequest) (*models.OperationResponse, error) {
 	req := &client.Request{
 		Method: "POST",
-		Path:   "/workspaces/current/model-providers/" + modelProvider + "/models",
+		Path:   "/workspaces/current/model-providers/" + modelProvider + "/models/credentials",
 		Body:   request,
 	}
 	var resp models.OperationResponse
