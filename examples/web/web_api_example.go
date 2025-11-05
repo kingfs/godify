@@ -13,14 +13,13 @@ import (
 func main() {
 	// 替换为你的 API Code 和 Dify 服务器地址
 	appCode := "your-web-api-code"
-	baseURL := "https://api.dify.ai"
 
 	// 创建 Web API 客户端
-	client := dify.NewWebClient(appCode, baseURL)
+	client := dify.NewWebClient(appCode)
 
 	// 首先获取访问令牌 (可选，会自动调用)
 	fmt.Println("=== 获取访问令牌 ===")
-	err := client.GetPassport(context.Background(), "")
+	_, err := client.GetPassport(context.Background(), "")
 	if err != nil {
 		log.Printf("获取访问令牌失败: %v", err)
 		return

@@ -51,11 +51,11 @@ func TestLogin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Login failed: %v", err)
 	}
-	t.Logf("Login response: %#v", resp)
+	t.Logf("Login response: %+#v", resp)
 }
 
 func TestGetAccountProfile(t *testing.T) {
-	auth_token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNTc3ODc2NjAtYWJhMy00ZmUyLTgzYWItNDFhZDE3OWIyNTQxIiwiZXhwIjoxNzUzOTYxNzE1LCJpc3MiOiJTRUxGX0hPU1RFRCIsInN1YiI6IkNvbnNvbGUgQVBJIFBhc3Nwb3J0In0.ufwwIMijC_Mv4_KiQaKJ-yzuPhw-2DstZLDnMXGVjeE"
+	auth_token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTVkNTdjNWEtOTJhNy00M2Q4LWJmNzktYzg5OGY1NTYzZWY4IiwiZXhwIjoxNzYyMzE0NTY1LCJpc3MiOiJTRUxGX0hPU1RFRCIsInN1YiI6IkNvbnNvbGUgQVBJIFBhc3Nwb3J0In0.lhgFIdYItIejiWJVTAYhT4zK8tJoeWSJHj8RMRd7K3k"
 
 	server := SetupAccountMockServer()
 	defer server.Close()

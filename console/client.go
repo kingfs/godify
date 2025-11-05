@@ -17,11 +17,14 @@ type Client struct {
 // 注意: Console API通常需要session认证，这里使用Bearer token作为临时方案
 func NewClient(accessToken, baseURL string) *Client {
 	config := &client.ClientConfig{
-		BaseURL:    baseURL + "/console/api",
-		AuthType:   client.AuthTypeBearer,
-		Token:      accessToken,
+		BaseURL:  baseURL + "/console/api",
+		AuthType: client.AuthTypeBearer,
+		// Token:      accessToken,
 		Timeout:    30 * time.Second,
 		MaxRetries: 3,
+		Cookies: map[string]string{
+			"access_token": accessToken,
+		},
 	}
 
 	return &Client{
@@ -51,6 +54,16 @@ func (c *Client) WithWorkspaceID(workspaceID string) *Client {
 	return c
 }
 
+func (c *Client) WithCookies(cookies map[string]string) *Client {
+	c.baseClient.WithCookies(cookies)
+	return c
+}
+
+func (c *Client) WithToken(token string) *Client {
+	c.baseClient.WithToken(token)
+	return c
+}
+
 // ============ 认证相关 ============
 
 // Login 用户登录
@@ -62,6 +75,15 @@ func (c *Client) Login(ctx context.Context, req *models.LoginRequest) (*models.L
 	}
 
 	var result models.LoginResponse
-	err := c.baseClient.DoJSON(ctx, httpReq, &result)
+	resp, err := c.baseClient.Do(ctx, httpReq)
+	if err != nil {
+		return nil, err
+	}
+	// 将resp.Cookies中的csrf_token、access_token、refresh_token赋值给result.Data.CSRFToken、result.Data.AccessToken、result.Data.RefreshToken
+	if resp.Cookies != nil {
+		result.Data.CSRFToken = resp.Cookies["csrf_token"]
+		result.Data.AccessToken = resp.Cookies["access_token"]
+		result.Data.RefreshToken = resp.Cookies["refresh_token"]
+	}
 	return &result, err
 }

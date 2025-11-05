@@ -36,6 +36,7 @@ type ClientConfig struct {
 	MaxRetries int
 
 	WorkspaceID *string
+	Cookies     map[string]string
 
 	// 监控配置
 	Metrics *metrics.Metrics
@@ -99,13 +100,21 @@ func (c *BaseClient) WithWorkspaceID(workspaceID string) *BaseClient {
 
 // WithToken 设置认证token
 func (c *BaseClient) WithToken(token string) *BaseClient {
-	c.config.Token = token
+	c.config.Cookies["access_token"] = token
 	return c
 }
 
 // WithLogger 设置日志器
 func (c *BaseClient) WithLogger(logger *slog.Logger) *BaseClient {
 	c.logger = logger
+	return c
+}
+
+// WithCookies 设置cookies
+func (c *BaseClient) WithCookies(cookies map[string]string) *BaseClient {
+	for k, v := range cookies {
+		c.config.Cookies[k] = v
+	}
 	return c
 }
 
@@ -155,6 +164,7 @@ type Response struct {
 	StatusCode int
 	Headers    http.Header
 	Body       []byte
+	Cookies    map[string]string // Cookie 名称到值的映射
 }
 
 // Do 执行HTTP请求
@@ -213,12 +223,26 @@ func (c *BaseClient) Do(ctx context.Context, req *Request) (*Response, error) {
 		httpReq.Header.Set("Content-Type", contentType)
 	}
 
-	// 设置认证头
-	switch c.config.AuthType {
-	case AuthTypeBearer:
-		httpReq.Header.Set("Authorization", "Bearer "+c.config.Token)
-	case AuthTypeAPIKey:
-		httpReq.Header.Set("Authorization", "Bearer "+c.config.Token)
+	// // 设置认证头
+	// switch c.config.AuthType {
+	// case AuthTypeBearer:
+	// 	httpReq.Header.Set("Authorization", "Bearer "+c.config.Token)
+	// case AuthTypeAPIKey:
+	// 	httpReq.Header.Set("Authorization", "Bearer "+c.config.Token)
+	// }
+
+	// 设置cookies
+	if c.config.Cookies != nil {
+		// 将c.config.Cookies中的所有键值对拼成string
+		cookieString := ""
+		for k, v := range c.config.Cookies {
+			cookieString += k + "=" + v + "; "
+		}
+		httpReq.Header.Add("Cookie", cookieString)
+		// csrf_token
+		if c.config.Cookies["csrf_token"] != "" {
+			httpReq.Header.Add("X-CSRF-Token", c.config.Cookies["csrf_token"])
+		}
 	}
 
 	if c.config.WorkspaceID != nil {
@@ -264,10 +288,20 @@ func (c *BaseClient) Do(ctx context.Context, req *Request) (*Response, error) {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
+	// 提取 cookies（如果有）
+	var cookies map[string]string
+	if respCookies := resp.Cookies(); len(respCookies) > 0 {
+		cookies = make(map[string]string, len(respCookies))
+		for _, cookie := range respCookies {
+			cookies[cookie.Name] = cookie.Value
+		}
+	}
+
 	response := &Response{
 		StatusCode: resp.StatusCode,
 		Headers:    resp.Header,
 		Body:       respBody,
+		Cookies:    cookies,
 	}
 
 	// 记录请求完成

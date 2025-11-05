@@ -422,7 +422,7 @@ func TestDeleteWorkspacesCurrentMembers(t *testing.T) {
 
 	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
 
-	memberID := "4cd7b103-3a7b-4784-ba15-2be1911554e4"
+	memberID := "c8f8cecd-3ad1-45a1-9d56-d82466aea3c2"
 	resp, err := client.DeleteWorkspacesCurrentMembers(context.Background(), memberID)
 	if err != nil {
 		t.Fatal(err)
@@ -436,7 +436,7 @@ func TestUpdateWorkspacesCurrentMembersRole(t *testing.T) {
 
 	client := TestNewClientWithBaseURL(mockServer.URL, workspaces_use_real_url)
 
-	memberID := "3780d271-1f6b-42b3-95b5-b90dd6893764"
+	memberID := "5ba9fac4-e3ad-4e3b-8ae8-76a6b0cb8569"
 	role := "editor"
 	resp, err := client.UpdateWorkspacesCurrentMembersRole(context.Background(), memberID, role)
 	if err != nil {
@@ -813,10 +813,6 @@ func TestSetModelProvider(t *testing.T) {
 			Voices:                  "alloy",
 			ApiKey:                  "sk-2yh4OEaCi5dkMwuoZZHRxoesxOcLcDUWgfu4F8thyWDwoRen",
 			EndpointUrl:             "https://aiapi.chaitin.net/v1",
-		},
-		LoadBalancing: models.SetModelProviderLoadBalancing{
-			Enabled: false,
-			Configs: []string{},
 		},
 	}
 	resp, err := client.SetModelProvider(context.Background(), modelProvider, request)

@@ -1,6 +1,6 @@
 module github.com/kingfs/godify
 
-go 1.21.0
+go 1.25.2
 
 require (
 	github.com/joho/godotenv v1.5.1

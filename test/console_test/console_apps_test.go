@@ -85,6 +85,9 @@ func TestGetAppsMessage(t *testing.T) {
 	defer mockServer.Close()
 
 	client := TestNewClientWithBaseURL(mockServer.URL, apps_use_real_url)
+	client.WithCookies(map[string]string{
+		"csrf_token": "test-csrf-token",
+	})
 	resp, err := client.GetAppsMessage(context.Background(), "eb777f1d-77ac-4b67-b192-4b55371cef3d", "5adcf08d-f535-4516-9bd6-eb71bc561b70")
 	if err != nil {
 		t.Fatal(err)

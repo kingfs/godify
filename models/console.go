@@ -195,6 +195,7 @@ type LoginRequest struct {
 type TokenPair struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
+	CSRFToken    string `json:"csrf_token"`
 }
 
 // LoginResponse 登录响应
