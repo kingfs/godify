@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -34,6 +35,7 @@ type ClientConfig struct {
 	HTTPClient *http.Client
 	Timeout    time.Duration
 	MaxRetries int
+	SkipTLS    bool
 
 	WorkspaceID *string
 	Cookies     map[string]string
@@ -63,6 +65,11 @@ func NewBaseClient(config *ClientConfig) *BaseClient {
 			MaxIdleConns:        config.MaxIdleConns,
 			MaxIdleConnsPerHost: config.MaxIdleConnsPerHost,
 			IdleConnTimeout:     config.IdleConnTimeout,
+		}
+		if config.SkipTLS {
+			transport.TLSClientConfig = &tls.Config{
+				InsecureSkipVerify: true,
+			}
 		}
 
 		config.HTTPClient = &http.Client{

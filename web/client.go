@@ -23,6 +23,7 @@ func NewClient(baseURL string) *Client {
 		BaseURL:    baseURL + "/api",
 		AuthType:   client.AuthTypeBearer,
 		Token:      "", // 初始为空，通过passport获取
+		SkipTLS:    true,
 		Timeout:    30 * time.Second,
 		MaxRetries: 3,
 	}

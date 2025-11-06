@@ -21,6 +21,7 @@ func NewClient(accessToken, baseURL string) *Client {
 		AuthType: client.AuthTypeBearer,
 		// Token:      accessToken,
 		Timeout:    30 * time.Second,
+		SkipTLS:    true,
 		MaxRetries: 3,
 		Cookies: map[string]string{
 			"access_token": accessToken,
