@@ -38,6 +38,11 @@ func (c *Client) WithAppCode(appCode string) *Client {
 	return c
 }
 
+func (c *Client) WithCSRFToken(csrfToken string) *Client {
+	c.baseClient.WithCookies(map[string]string{"csrf_token": csrfToken})
+	return c
+}
+
 // PassportResponse Passport响应
 type PassportResponse struct {
 	AccessToken string `json:"access_token"`

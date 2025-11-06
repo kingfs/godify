@@ -107,6 +107,9 @@ func (c *BaseClient) WithWorkspaceID(workspaceID string) *BaseClient {
 
 // WithToken 设置认证token
 func (c *BaseClient) WithToken(token string) *BaseClient {
+	if c.config.Cookies == nil {
+		c.config.Cookies = make(map[string]string)
+	}
 	c.config.Cookies["access_token"] = token
 	return c
 }
