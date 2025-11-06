@@ -122,6 +122,9 @@ func (c *BaseClient) WithLogger(logger *slog.Logger) *BaseClient {
 
 // WithCookies 设置cookies
 func (c *BaseClient) WithCookies(cookies map[string]string) *BaseClient {
+	if c.config.Cookies == nil {
+		c.config.Cookies = make(map[string]string)
+	}
 	for k, v := range cookies {
 		c.config.Cookies[k] = v
 	}
