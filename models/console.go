@@ -713,3 +713,299 @@ type AppImportResponse struct {
 type TenantListResponse struct {
 	Workspaces []Workspace `json:"workspaces"`
 }
+
+// UpdateAppModelConfigRequest 更新应用模型配置的请求结构体
+// 对应 POST /apps/<uuid:app_id>/model-config 接口
+type UpdateAppModelConfigRequest struct {
+	// 模型配置（必需）
+	Model ModelConfig `json:"model" binding:"required"`
+
+	// 提示词配置
+	PromptType             string                  `json:"prompt_type"`              // "simple" 或 "advanced"
+	PrePrompt              string                  `json:"pre_prompt"`               // 简单模式的提示词
+	ChatPromptConfig       *ChatPromptConfig       `json:"chat_prompt_config"`       // 高级模式的聊天提示配置
+	CompletionPromptConfig *CompletionPromptConfig `json:"completion_prompt_config"` // 高级模式的补全提示配置
+
+	// 用户输入表单配置
+	UserInputForm any `json:"user_input_form"`
+
+	// 数据集配置
+	DatasetConfigs       *DatasetConfigs `json:"dataset_configs"`
+	DatasetQueryVariable string          `json:"dataset_query_variable"` // 当有数据集时必需
+
+	// 文件上传配置
+	FileUpload *FileUploadConfig `json:"file_upload"`
+
+	// 敏感词过滤配置
+	SensitiveWordAvoidance *SensitiveWordAvoidanceConfig `json:"sensitive_word_avoidance"`
+
+	// CHAT 模式特有参数
+	OpeningStatement              string                               `json:"opening_statement"`                // 开场白
+	SuggestedQuestions            []string                             `json:"suggested_questions"`              // 建议问题列表
+	SuggestedQuestionsAfterAnswer *SuggestedQuestionsAfterAnswerConfig `json:"suggested_questions_after_answer"` // 回答后建议问题配置
+	SpeechToText                  *SpeechToTextConfig                  `json:"speech_to_text"`                   // 语音转文字配置
+	TextToSpeech                  *TextToSpeechConfig                  `json:"text_to_speech"`                   // 文字转语音配置
+	RetrieverResource             *RetrieverResourceConfig             `json:"retriever_resource"`               // 检索资源显示配置
+
+	// AGENT_CHAT 模式特有参数
+	AgentMode *AgentModeConfig `json:"agent_mode"` // 必需
+
+	// COMPLETION 模式特有参数
+	MoreLikeThis *MoreLikeThisConfig `json:"more_like_this"` // 相似内容推荐配置
+
+	// 其他可选参数
+	ExternalDataTools *[]ExternalDataTool `json:"external_data_tools"` // 外部数据工具配置
+	SystemParameters  *SystemParameters   `json:"system_parameters"`   // 系统参数
+}
+
+// ModelConfig 模型配置
+type ModelConfig struct {
+	Provider         string                `json:"provider" binding:"required"`          // 模型提供商（必需）
+	Name             string                `json:"name" binding:"required"`              // 模型名称（必需）
+	Mode             string                `json:"mode"`                                 // 模型模式（自动设置）
+	CompletionParams ModelCompletionParams `json:"completion_params" binding:"required"` // 完成参数（必需）
+}
+
+// ModelCompletionParams 模型完成参数
+type ModelCompletionParams struct {
+	MaxTokens        *int     `json:"max_tokens,omitempty"`
+	Temperature      *float64 `json:"temperature,omitempty"`
+	TopP             *float64 `json:"top_p,omitempty"`
+	PresencePenalty  *float64 `json:"presence_penalty,omitempty"`
+	FrequencyPenalty *float64 `json:"frequency_penalty,omitempty"`
+	Stop             []string `json:"stop"` // 停止序列（最多4个）
+	Echo             *bool    `json:"echo,omitempty"`
+}
+
+// ChatPromptConfig 聊天提示配置
+type ChatPromptConfig struct {
+	Prompt []PromptItem `json:"prompt"` // 提示项列表（最多10个）
+}
+
+// CompletionPromptConfig 补全提示配置
+type CompletionPromptConfig struct {
+	Prompt                    PromptItem                `json:"prompt"`
+	ConversationHistoriesRole ConversationHistoriesRole `json:"conversation_histories_role"`
+}
+
+// PromptItem 提示项
+type PromptItem struct {
+	Role string `json:"role"` // "system", "user", "assistant"
+	Text string `json:"text" binding:"required"`
+}
+
+// ConversationHistoriesRole 对话历史角色前缀
+type ConversationHistoriesRole struct {
+	UserPrefix      string `json:"user_prefix"`      // 用户前缀，默认为 "Human"
+	AssistantPrefix string `json:"assistant_prefix"` // 助手前缀，默认为 "Assistant"
+}
+
+// UserInputFormItem 用户输入表单项
+type UserInputFormItem struct {
+	TextInput *TextInputFormItem `json:"text-input,omitempty"`
+	Select    *SelectFormItem    `json:"select,omitempty"`
+	Paragraph *TextInputFormItem `json:"paragraph,omitempty"`
+}
+
+// TextInputFormItem 文本输入表单项
+type TextInputFormItem struct {
+	Default   string `json:"default"`
+	Label     string `json:"label"`
+	Variable  string `json:"variable"`
+	Required  bool   `json:"required"`
+	MaxLength int    `json:"max_length"`
+	Hide      bool   `json:"hide"`
+}
+
+// SelectFormItem 选择表单项
+type SelectFormItem struct {
+	Default  string   `json:"default"`
+	Label    string   `json:"label"`
+	Variable string   `json:"variable"`
+	Required bool     `json:"required"`
+	Options  []string `json:"options"`
+	Hide     bool     `json:"hide"`
+}
+
+// DatasetConfigs 数据集配置
+type DatasetConfigs struct {
+	RetrievalModel              string                       `json:"retrieval_model"` // "single" 或 "multiple"
+	RerankingModel              *RerankingModel              `json:"reranking_model,omitempty"`
+	TopK                        int                          `json:"top_k"`
+	ScoreThresholdEnabled       bool                         `json:"score_threshold_enabled"`
+	ScoreThreshold              *float64                     `json:"score_threshold,omitempty"`
+	Datasets                    *DatasetsConfig              `json:"datasets"`
+	RerankingMode               *string                      `json:"reranking_mode,omitempty"`
+	Weights                     *WeightsConfig               `json:"weights,omitempty"`
+	RerankingEnable             *bool                        `json:"reranking_enable,omitempty"`
+	MetadataFilteringMode       *string                      `json:"metadata_filtering_mode,omitempty"`
+	MetadataFilteringConditions *MetadataFilteringConditions `json:"metadata_filtering_conditions,omitempty"`
+	MetadataModelConfig         *ModelConfig                 `json:"metadata_model_config,omitempty"`
+}
+
+// RerankingModel 重排序模型
+type RerankingModel struct {
+	RerankingProviderName string `json:"reranking_provider_name"`
+	RerankingModelName    string `json:"reranking_model_name"`
+}
+
+// DatasetsConfig 数据集列表配置
+type DatasetsConfig struct {
+	Datasets []DatasetItem `json:"datasets"`
+}
+
+// DatasetItem 数据集项
+type DatasetItem struct {
+	Dataset DatasetTool `json:"dataset"`
+}
+
+// WeightsConfig 权重配置
+type WeightsConfig struct {
+	WeightType     string          `json:"weight_type"`
+	VectorSetting  *VectorSetting  `json:"vector_setting,omitempty"`
+	KeywordSetting *KeywordSetting `json:"keyword_setting,omitempty"`
+}
+
+// VectorSetting 向量设置
+type VectorSetting struct {
+	VectorWeight          float64 `json:"vector_weight"`
+	EmbeddingProviderName string  `json:"embedding_provider_name"`
+	EmbeddingModelName    string  `json:"embedding_model_name"`
+}
+
+// KeywordSetting 关键词设置
+type KeywordSetting struct {
+	KeywordWeight float64 `json:"keyword_weight"`
+}
+
+// MetadataFilteringConditions 元数据过滤条件
+type MetadataFilteringConditions struct {
+	LogicalOperator string                       `json:"logical_operator"` // "and" 或 "or"
+	Conditions      []MetadataFilteringCondition `json:"conditions"`
+}
+
+// MetadataFilteringCondition 元数据过滤条件项
+// value 字段可以是字符串、数字或字符串数组
+type MetadataFilteringCondition struct {
+	ID                 string `json:"id"`                  // 前端使用的唯一标识
+	Name               string `json:"name"`                // 元数据字段名
+	ComparisonOperator string `json:"comparison_operator"` // 比较操作符
+	Value              any    `json:"value,omitempty"`     // 值（可以是字符串、数字或字符串数组）
+}
+
+// FileUploadConfig 文件上传配置
+type FileUploadConfig struct {
+	Image                    *VisionSettings `json:"image,omitempty"`
+	Enabled                  bool            `json:"enabled,omitempty"`
+	AllowedFileTypes         []string        `json:"allowed_file_types,omitempty"`
+	AllowedFileExtensions    []string        `json:"allowed_file_extensions,omitempty"`
+	AllowedFileUploadMethods []string        `json:"allowed_file_upload_methods,omitempty"`
+	NumberLimits             *int            `json:"number_limits,omitempty"`
+}
+
+// VisionSettings 视觉设置
+type VisionSettings struct {
+	Enabled         bool     `json:"enabled"`
+	NumberLimits    *int     `json:"number_limits,omitempty"`
+	Detail          *string  `json:"detail,omitempty"`
+	TransferMethods []string `json:"transfer_methods,omitempty"`
+}
+
+// SensitiveWordAvoidanceConfig 敏感词过滤配置
+type SensitiveWordAvoidanceConfig struct {
+	Enabled bool                   `json:"enabled"`
+	Type    *string                `json:"type,omitempty"`
+	Config  *ModerationConfigInner `json:"config,omitempty"`
+}
+
+// ModerationConfigInner 审核配置内部结构
+type ModerationConfigInner struct {
+	Keywords            *string                  `json:"keywords,omitempty"`
+	APIBasedExtensionID *string                  `json:"api_based_extension_id,omitempty"`
+	InputsConfig        *ModerationContentConfig `json:"inputs_config,omitempty"`
+	OutputsConfig       *ModerationContentConfig `json:"outputs_config,omitempty"`
+}
+
+// ModerationContentConfig 审核内容配置
+type ModerationContentConfig struct {
+	Enabled        bool    `json:"enabled"`
+	PresetResponse *string `json:"preset_response,omitempty"`
+}
+
+// SuggestedQuestionsAfterAnswerConfig 回答后建议问题配置
+type SuggestedQuestionsAfterAnswerConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
+// SpeechToTextConfig 语音转文字配置
+type SpeechToTextConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
+// TextToSpeechConfig 文字转语音配置
+type TextToSpeechConfig struct {
+	Enabled  bool    `json:"enabled"`
+	Voice    *string `json:"voice,omitempty"`
+	Language *string `json:"language,omitempty"`
+	AutoPlay *string `json:"auto_play,omitempty"` // "manual" 或 "auto"
+}
+
+// RetrieverResourceConfig 检索资源显示配置
+type RetrieverResourceConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
+// AgentModeConfig Agent 模式配置
+type AgentModeConfig struct {
+	Enabled      bool       `json:"enabled" binding:"required"`
+	Strategy     string     `json:"strategy"` // "router", "function_call", "react"
+	MaxIteration *int       `json:"max_iteration,omitempty"`
+	Tools        []ToolItem `json:"tools"`
+}
+
+// ToolItem 工具项
+type ToolItem struct {
+	// 数据集工具
+	Dataset *DatasetTool `json:"dataset,omitempty"`
+
+	// 敏感词过滤工具
+	SensitiveWordAvoidance *SensitiveWordAvoidanceTool `json:"sensitive-word-avoidance,omitempty"`
+
+	// Agent 工具
+	ProviderID     *string `json:"provider_id,omitempty"`
+	ProviderType   *string `json:"provider_type,omitempty"`
+	ProviderName   *string `json:"provider_name,omitempty"`
+	ToolName       *string `json:"tool_name,omitempty"`
+	ToolLabel      *string `json:"tool_label,omitempty"`
+	ToolParameters any     `json:"tool_parameters,omitempty"`
+	Enabled        bool    `json:"enabled"`
+	CredentialID   *string `json:"credential_id,omitempty"`
+}
+
+// DatasetTool 数据集工具
+type DatasetTool struct {
+	Enabled bool   `json:"enabled"`
+	ID      string `json:"id"`
+}
+
+// SensitiveWordAvoidanceTool 敏感词过滤工具
+type SensitiveWordAvoidanceTool struct {
+	Enabled        bool     `json:"enabled"`
+	Words          []string `json:"words"`
+	CannedResponse string   `json:"canned_response"`
+}
+
+// MoreLikeThisConfig 相似内容推荐配置
+type MoreLikeThisConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
+// ExternalDataTool 外部数据工具
+type ExternalDataTool struct {
+	Type           string  `json:"type"`
+	Enabled        bool    `json:"enabled"`
+	Config         any     `json:"config"`
+	ToolName       *string `json:"tool_name,omitempty"`
+	ToolLabel      *string `json:"tool_label,omitempty"`
+	ToolParameters any     `json:"tool_parameters,omitempty"`
+}

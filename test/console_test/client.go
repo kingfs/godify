@@ -13,8 +13,8 @@ func TestNewClientWithBaseURL(baseURL string, use_real_url bool) *console.Client
 	var csrfToken string
 	// 是否使用真实测试url
 	if use_real_url {
-		baseURL = "http://localhost"
 		_ = godotenv.Load("../../.env")
+		baseURL = os.Getenv("base_url")
 		auth = os.Getenv("authorization")
 		workspaceID = os.Getenv("workspace_id")
 		csrfToken = os.Getenv("csrf_token")

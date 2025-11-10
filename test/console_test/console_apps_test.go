@@ -196,3 +196,24 @@ func TestPublishApp(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestPublishAgentApp(t *testing.T) {
+	mockServer := SetupAppsMockServer()
+	defer mockServer.Close()
+
+	client := TestNewClientWithBaseURL(mockServer.URL, apps_use_real_url)
+	// 从 JSON 文件构造 models.UpdateAppModelConfigRequest
+	payloadPath := "./model-config-payload.json"
+	data, readErr := os.ReadFile(payloadPath)
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	var req models.UpdateAppModelConfigRequest
+	if unmarshalErr := json.Unmarshal(data, &req); unmarshalErr != nil {
+		t.Fatal(unmarshalErr)
+	}
+	// 调用发布 Agent App 接口
+	if err := client.PublishAgentApp(context.Background(), "a14c07d4-1e1a-49a5-95dd-fba3431eb729", &req); err != nil {
+		t.Fatal(err)
+	}
+}

@@ -132,7 +132,7 @@ type SystemParameters struct {
 }
 
 // UserInputFormItem 用户输入表单项 (原始格式，保持灵活性)
-type UserInputFormItem map[string]interface{}
+// type UserInputFormItem map[string]interface{}
 
 // ParagraphConfig 段落配置
 type ParagraphConfig struct {
@@ -181,7 +181,7 @@ type NumberConfig struct {
 }
 
 // FileUploadConfig 文件上传配置 (保持灵活性)
-type FileUploadConfig map[string]interface{}
+// type FileUploadConfig map[string]interface{}
 
 // FileTypeConfig 文件类型配置
 type FileTypeConfig struct {

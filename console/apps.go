@@ -314,3 +314,13 @@ func (c *Client) PublishApp(ctx context.Context, appID string) error {
 	var result models.OperationResponse
 	return c.baseClient.DoJSON(ctx, req, &result)
 }
+
+func (c *Client) PublishAgentApp(ctx context.Context, appID string, req *models.UpdateAppModelConfigRequest) error {
+	httpReq := &client.Request{
+		Method: "POST",
+		Path:   "/apps/" + appID + "/model-config",
+		Body:   req,
+	}
+	result := models.OperationResponse{}
+	return c.baseClient.DoJSON(ctx, httpReq, &result)
+}
