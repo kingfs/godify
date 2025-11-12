@@ -92,7 +92,7 @@ func (c *Client) Login(ctx context.Context, req *models.LoginRequest) (*models.L
 // refresh token
 func (c *Client) RefreshToken(ctx context.Context) (*models.LoginResponse, error) {
 	httpReq := &client.Request{
-		Method: "GET",
+		Method: "POST",
 		Path:   "/refresh-token",
 	}
 
