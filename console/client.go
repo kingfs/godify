@@ -88,3 +88,23 @@ func (c *Client) Login(ctx context.Context, req *models.LoginRequest) (*models.L
 	}
 	return &result, err
 }
+
+// refresh token
+func (c *Client) RefreshToken(ctx context.Context) (*models.LoginResponse, error) {
+	httpReq := &client.Request{
+		Method: "GET",
+		Path:   "/refresh-token",
+	}
+
+	var result models.LoginResponse
+	resp, err := c.baseClient.Do(ctx, httpReq)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Cookies != nil {
+		result.Data.CSRFToken = resp.Cookies["csrf_token"]
+		result.Data.AccessToken = resp.Cookies["access_token"]
+		result.Data.RefreshToken = resp.Cookies["refresh_token"]
+	}
+	return &result, err
+}
