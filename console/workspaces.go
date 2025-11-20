@@ -363,17 +363,20 @@ func (c *Client) DeleteToolApiProvider(ctx context.Context, provider string) (*m
 }
 
 // CreateMCPProvider 创建 MCP Provider
-func (c *Client) CreateMCPProvider(ctx context.Context, serverURL, name string, icon interface{}, iconType, iconBackground, serverIdentifier string) (*models.ToolProviderEntity, error) {
+func (c *Client) CreateMCPProvider(ctx context.Context, headers map[string]string, serverURL, name string, icon any, iconType, iconBackground, serverIdentifier string, sseReadTimeout, timeout float64) (*models.ToolProviderEntity, error) {
 	req := &client.Request{
 		Method: "POST",
 		Path:   "/workspaces/current/tool-provider/mcp",
 		Body: map[string]interface{}{
+			"headers":           headers,
 			"server_url":        serverURL,
 			"name":              name,
 			"icon":              icon,
 			"icon_type":         iconType,
 			"icon_background":   iconBackground,
 			"server_identifier": serverIdentifier,
+			"sse_read_timeout":  sseReadTimeout,
+			"timeout":           timeout,
 		},
 	}
 	var resp models.ToolProviderEntity
@@ -443,8 +446,7 @@ func (c *Client) AuthMCPProvider(ctx context.Context, providerID, authorizationC
 		Method: "POST",
 		Path:   "/workspaces/current/tool-provider/mcp/auth",
 		Body: map[string]interface{}{
-			"provider_id":        providerID,
-			"authorization_code": authorizationCode,
+			"provider_id": providerID,
 		},
 	}
 	var resp models.OperationResponse
