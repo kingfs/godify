@@ -478,6 +478,20 @@ func (c *Client) SetModelProvider(ctx context.Context, modelProvider string, req
 	return &resp, err
 }
 
+func (c *Client) DeleteModelProvider(ctx context.Context, modelProvider, model, model_type string) (*models.OperationResponse, error) {
+	req := &client.Request{
+		Method: "DELETE",
+		Path:   "/workspaces/current/model-providers/" + modelProvider + "/models",
+		Body: map[string]interface{}{
+			"model":      model,
+			"model_type": model_type,
+		},
+	}
+	var resp models.OperationResponse
+	err := c.baseClient.DoJSON(ctx, req, &resp)
+	return &resp, err
+}
+
 func (c *Client) UpdatePluginCredential(ctx context.Context, provider string, credential map[string]any, credentialType, credentialName string) (*models.OperationResponse, error) {
 	req := &client.Request{
 		Method: "POST",
