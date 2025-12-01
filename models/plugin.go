@@ -17,6 +17,7 @@ type PluginListResponse struct {
 type PluginItem struct {
 	ID                     string `json:"id"`
 	PluginUniqueIdentifier string `json:"plugin_unique_identifier"`
+	InstallationID         string `json:"installation_id"`
 	Name                   string `json:"name"`
 	Description            string `json:"description"`
 	Icon                   string `json:"icon"`
