@@ -15,14 +15,15 @@ type PluginListResponse struct {
 
 // PluginItem 需根据实际插件字段定义，暂用 map 占位
 type PluginItem struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	Description   string `json:"description"`
-	Icon          string `json:"icon"`
-	LatestVersion string `json:"latest_version"`
-	Status        string `json:"status"`
-	CreatedAt     string `json:"created_at"`
-	UpdatedAt     string `json:"updated_at"`
+	ID                     string `json:"id"`
+	PluginUniqueIdentifier string `json:"plugin_unique_identifier"`
+	Name                   string `json:"name"`
+	Description            string `json:"description"`
+	Icon                   string `json:"icon"`
+	LatestVersion          string `json:"latest_version"`
+	Status                 string `json:"status"`
+	CreatedAt              string `json:"created_at"`
+	UpdatedAt              string `json:"updated_at"`
 }
 
 // PluginListLatestVersionsResponse 用于接收插件最新版本列表接口返回值
