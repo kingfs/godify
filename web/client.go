@@ -14,7 +14,7 @@ import (
 type Client struct {
 	baseClient  *client.BaseClient
 	appCode     string
-	accessToken string
+	appPassport string
 }
 
 // NewClient 创建Web API客户端 (需要app code而不是api key)
@@ -35,6 +35,11 @@ func NewClient(baseURL string) *Client {
 
 func (c *Client) WithAppCode(appCode string) *Client {
 	c.appCode = appCode
+	return c
+}
+
+func (c *Client) WithAppPassport(appPassport string) *Client {
+	c.appPassport = appPassport
 	return c
 }
 
@@ -68,14 +73,14 @@ func (c *Client) GetPassport(ctx context.Context, userID string) (string, error)
 		return "", fmt.Errorf("failed to get passport: %w", err)
 	}
 
-	c.accessToken = result.AccessToken
+	c.appPassport = result.AccessToken
 	c.baseClient.WithToken(result.AccessToken)
 	return result.AccessToken, nil
 }
 
 // ensureAuthenticated 确保已认证
 func (c *Client) ensureAuthenticated(ctx context.Context) error {
-	if c.accessToken == "" {
+	if c.appPassport == "" {
 		_, err := c.GetPassport(ctx, "")
 		if err != nil {
 			return err
@@ -94,6 +99,7 @@ func (c *Client) doAuthenticatedRequest(ctx context.Context, req *client.Request
 		req.Headers = make(map[string]string)
 	}
 	req.Headers["X-App-Code"] = c.appCode
+	req.Headers["X-App-Passport"] = c.appPassport
 
 	return c.baseClient.DoJSON(ctx, req, result)
 }
