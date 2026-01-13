@@ -69,7 +69,7 @@ type FileUpload struct {
 	MimeType  string   `json:"mime_type"`
 	CreatedBy string   `json:"created_by"`
 	CreatedAt UnixTime `json:"created_at"`
-	URL       string   `json:"url,omitempty"`
+	URL       string   `json:"source_url,omitempty"`
 }
 
 // AppMode 应用模式

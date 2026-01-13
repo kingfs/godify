@@ -3,6 +3,7 @@ package web
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"mime/multipart"
 	"strconv"
@@ -446,14 +447,13 @@ func (c *Client) UploadFile(ctx context.Context, filename string, fileData []byt
 	if source != "" {
 		extraFields["source"] = source
 	}
+	var result models.FileUpload
 
-	_, err := c.authenticatedUploadFile(ctx, "/files/upload", "file", filename, fileData, extraFields)
+	resp, err := c.authenticatedUploadFile(ctx, "/files/upload", "file", filename, fileData, extraFields)
 	if err != nil {
 		return nil, err
 	}
-
-	var result models.FileUpload
-	if err := c.doAuthenticatedRequest(ctx, &client.Request{}, &result); err != nil {
+	if err := json.Unmarshal(resp.Body, &result); err != nil {
 		return nil, err
 	}
 
@@ -563,6 +563,5 @@ func (c *Client) authenticatedUploadFile(ctx context.Context, path string, field
 		},
 		Body: buf.Bytes(),
 	}
-
 	return c.baseClient.Do(ctx, req)
 }
