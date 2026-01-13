@@ -445,7 +445,7 @@ func (c *Client) UploadFile(ctx context.Context, filename string, fileData []byt
 		extraFields["source"] = source
 	}
 
-	_, err := c.baseClient.UploadFile(ctx, "/files", "file", filename, fileData, extraFields)
+	_, err := c.baseClient.UploadFile(ctx, "/files/upload", "file", filename, fileData, extraFields)
 	if err != nil {
 		return nil, err
 	}
