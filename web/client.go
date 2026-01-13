@@ -451,7 +451,7 @@ func (c *Client) UploadFile(ctx context.Context, filename string, fileData []byt
 	}
 
 	var result models.FileUpload
-	if err := c.baseClient.DoJSON(ctx, &client.Request{}, &result); err != nil {
+	if err := c.doAuthenticatedRequest(ctx, &client.Request{}, &result); err != nil {
 		return nil, err
 	}
 
@@ -471,7 +471,7 @@ func (c *Client) AudioToText(ctx context.Context, audioData []byte, filename str
 	}
 
 	var result map[string]interface{}
-	if err := c.baseClient.DoJSON(ctx, &client.Request{}, &result); err != nil {
+	if err := c.doAuthenticatedRequest(ctx, &client.Request{}, &result); err != nil {
 		return nil, err
 	}
 
