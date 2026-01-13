@@ -1,8 +1,10 @@
 package web
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"mime/multipart"
 	"strconv"
 	"time"
 
@@ -445,7 +447,7 @@ func (c *Client) UploadFile(ctx context.Context, filename string, fileData []byt
 		extraFields["source"] = source
 	}
 
-	_, err := c.baseClient.UploadFile(ctx, "/files/upload", "file", filename, fileData, extraFields)
+	_, err := c.authenticatedUploadFile(ctx, "/files/upload", "file", filename, fileData, extraFields)
 	if err != nil {
 		return nil, err
 	}
@@ -465,7 +467,7 @@ func (c *Client) AudioToText(ctx context.Context, audioData []byte, filename str
 		return nil, err
 	}
 
-	_, err := c.baseClient.UploadFile(ctx, "/audio-to-text", "file", filename, audioData, nil)
+	_, err := c.authenticatedUploadFile(ctx, "/audio-to-text", "file", filename, audioData, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -524,4 +526,43 @@ func (c *Client) StopWorkflowTask(ctx context.Context, taskID string) (*models.W
 	var result models.WorkflowStopResponse
 	err := c.doAuthenticatedRequest(ctx, httpReq, &result)
 	return &result, err
+}
+
+func (c *Client) authenticatedUploadFile(ctx context.Context, path string, fieldName string, filename string, fileData []byte, extraFields map[string]string) (*client.Response, error) {
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+
+	// 添加文件字段
+	part, err := writer.CreateFormFile(fieldName, filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create form file: %w", err)
+	}
+
+	if _, err := part.Write(fileData); err != nil {
+		return nil, fmt.Errorf("failed to write file data: %w", err)
+	}
+
+	// 添加额外字段
+	for key, value := range extraFields {
+		if err := writer.WriteField(key, value); err != nil {
+			return nil, fmt.Errorf("failed to write field %s: %w", key, err)
+		}
+	}
+
+	if err := writer.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close multipart writer: %w", err)
+	}
+
+	req := &client.Request{
+		Method: "POST",
+		Path:   path,
+		Headers: map[string]string{
+			"Content-Type":   writer.FormDataContentType(),
+			"X-App-Code":     c.appCode,
+			"X-App-Passport": c.appPassport,
+		},
+		Body: buf.Bytes(),
+	}
+
+	return c.baseClient.Do(ctx, req)
 }
