@@ -21,7 +21,7 @@ func (c *Client) GetAccountProfile(ctx context.Context, auth_token string) (*mod
 	return &result, err
 }
 
-func (c *Client) SetupAccount(ctx context.Context, email string, name string, password string) (*models.OperationResponse, error) {
+func (c *Client) SetupAccount(ctx context.Context, email string, name string, password string, language string) (*models.OperationResponse, error) {
 	req := &client.Request{
 		Method: "POST",
 		Path:   "/setup",
@@ -29,6 +29,7 @@ func (c *Client) SetupAccount(ctx context.Context, email string, name string, pa
 			"email":    email,
 			"name":     name,
 			"password": password,
+			"language": language,
 		},
 	}
 
