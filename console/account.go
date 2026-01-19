@@ -39,7 +39,7 @@ func (c *Client) SetupAccount(ctx context.Context, email string, name string, pa
 }
 
 // UpdateAccountInterfaceLanguage 更新账户界面语言
-func (c *Client) UpdateAccountInterfaceLanguage(ctx context.Context, auth_token string, interface_language string) (*models.Account, error) {
+func (c *Client) UpdateAccountInterfaceLanguage(ctx context.Context, interface_language string) (*models.Account, error) {
 	req := &client.Request{
 		Method: "POST",
 		Path:   "/account/interface-language",
