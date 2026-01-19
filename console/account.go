@@ -65,3 +65,19 @@ func (c *Client) UpdateAccountTimezone(ctx context.Context, timezone string) (*m
 	err := c.baseClient.DoJSON(ctx, req, &result)
 	return &result, err
 }
+
+func (c *Client) InitAccount(ctx context.Context, interface_language, timezone string) (string, error) {
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/account/init",
+		Body: map[string]string{
+			"interface_language": interface_language,
+			"timezone":           timezone,
+		},
+	}
+	var result struct {
+		Result string `json:"result"`
+	}
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return result.Result, err
+}
