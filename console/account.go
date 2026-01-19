@@ -52,3 +52,16 @@ func (c *Client) UpdateAccountInterfaceLanguage(ctx context.Context, interface_l
 	err := c.baseClient.DoJSON(ctx, req, &result)
 	return &result, err
 }
+
+func (c *Client) UpdateAccountTimezone(ctx context.Context, timezone string) (*models.Account, error) {
+	req := &client.Request{
+		Method: "POST",
+		Path:   "/account/timezone",
+		Body: map[string]interface{}{
+			"timezone": timezone,
+		},
+	}
+	var result models.Account
+	err := c.baseClient.DoJSON(ctx, req, &result)
+	return &result, err
+}
