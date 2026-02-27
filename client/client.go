@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+
 	"github.com/kingfs/godify/config"
 	"github.com/kingfs/godify/errors"
 	"github.com/kingfs/godify/metrics"
@@ -74,7 +76,7 @@ func NewBaseClient(config *ClientConfig) *BaseClient {
 
 		config.HTTPClient = &http.Client{
 			Timeout:   config.Timeout,
-			Transport: transport,
+			Transport: otelhttp.NewTransport(transport),
 		}
 	}
 
